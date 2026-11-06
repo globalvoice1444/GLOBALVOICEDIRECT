@@ -1,0 +1,188 @@
+@import url('https://fonts.googleapis.com/css?family=Meie+Script');
+
+.merry-christmas-popup{
+	font-family: 'Meie Script', cursive;
+	
+}
+
+.ui-widget-header {
+	border: none;
+	background: transparent;
+	color: #fff;
+	font-weight: bold;
+}
+#banner-popup {
+	position: fixed; 
+	height: auto; 
+	width: 959px; 
+	top: 124.5px; 
+	left: 302.5px; 
+	display: none; 
+	z-index: 99999999;
+}
+.ui-widget.ui-widget-content {
+	border: none;
+	width:960px;
+	height:541px !important;
+	min-height:320px;
+	margin:10px;
+	display: none;
+	background: url('../img/banner.jpg') !important;
+}
+.popup-text {
+	font-size: 35px;
+	text-align: center;
+}
+h1.merry-christmas-title>span {
+    font-weight: 600;
+}
+.ui-dialog .ui-dialog-buttonpane button {
+	margin: .5em .4em .5em .4em;
+	cursor: pointer;
+	padding: 5px 26px;
+    border-radius: 7px;
+    float: right;
+    margin-top: 79px;
+}
+
+.ui-widget-content {
+	border: none;
+	background: transparent !important;
+	color: #DAA520;
+}
+
+.ui-dialog .ui-dialog-titlebar-close {
+	position: absolute;
+	right: .3em;
+	top: 5%;
+	width: 20px;
+	margin: -10px 0 0 0;
+	padding: 1px;
+	height: 20px;
+}
+
+.ui-button, .ui-button:hover, .ui-button:focus{
+	border: none;
+	background: #720000;
+	font-weight: normal;
+	color: #fff;
+}
+
+.ui-button {
+	padding: 7px 16px;
+	display: inline-block;
+	position: absolute;
+	line-height: normal;
+	cursor: pointer;
+	vertical-align: middle;
+	text-align: center;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	overflow: visible;
+	bottom: 0px;
+	right: calc(40% - 0px);
+}
+
+.ui-widget-overlay {
+	background:transparent;
+}
+
+.merry-christmas-title{
+	float:left;
+	font-size:45px;
+	text-align:center;
+	width:60%;
+	display:block;
+	margin:25px 20% 25px 20%;
+	text-shadow:2px 2px 2px #333;
+}
+
+.ui-widget-overlay{
+	background: #720000;
+	opacity:1.0;
+	font-family: Androgyne;
+	background-image: url('../img/snow/snow-large.png'), url('../img/snow/snow-medium.png'), url('../img/snow/snow-small.png');
+	height: 100%;
+	left: 0;
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index:9999999999;
+	-webkit-animation: ui-widget-overlay 10s linear infinite;
+	-moz-animation: ui-widget-overlay 10s linear infinite;
+	-ms-animation: ui-widget-overlay 10s linear infinite;
+	animation: ui-widget-overlay 10s linear infinite;
+	display: none;
+
+}
+@keyframes ui-widget-overlay {
+  0% {background-position: 0px 0px, 0px 0px, 0px 0px;}
+  50% {background-position: 500px 500px, 100px 200px, -100px 150px;}
+  100% {background-position: 500px 1000px, 200px 400px, -100px 300px;}
+}
+@-moz-keyframes ui-widget-overlay {
+  0% {background-position: 0px 0px, 0px 0px, 0px 0px;}
+  50% {background-position: 500px 500px, 100px 200px, -100px 150px;}
+  100% {background-position: 400px 1000px, 200px 400px, 100px 300px;}
+}
+@-webkit-keyframes ui-widget-overlay {
+  0% {background-position: 0px 0px, 0px 0px, 0px 0px;}
+  50% {background-position: 500px 500px, 100px 200px, -100px 150px;}
+  100% {background-position: 500px 1000px, 200px 400px, -100px 300px;}
+}
+@-ms-keyframes ui-widget-overlay {
+  0% {background-position: 0px 0px, 0px 0px, 0px 0px;}
+  50% {background-position: 500px 500px, 100px 200px, -100px 150px;}
+  100% {background-position: 500px 1000px, 200px 400px, -100px 300px;}
+}	
+
+@media screen and (max-width: 1024px){
+	#banner-popup {
+		position: fixed; 
+		height: auto; 
+		width: 97.7%; 
+		top: 237px; 
+		left: unset; 
+		display: block; 
+		z-index: 99999999;
+	}
+	.ui-dialog .ui-dialog-buttonpane button{
+		margin-top: 0px;
+    	margin-right: 168px;
+	}
+}
+@media screen and (max-width: 760px) {
+    .ui-widget.ui-widget-content {
+		border: none;
+		width: 96% !important;
+		height:auto;
+		min-height:190px;
+		top: 131px;
+		margin:10px;
+		background: url('../img/banner.jpg') !important;
+	}
+	.ui-dialog .ui-dialog-buttonpane button {
+	    margin-top: 115px;
+	    margin-right: 110px;
+	}
+	#banner-popup {
+		top: 59px;
+	}
+	.popup-text {
+		font-size: 26px;
+	}
+	h1.merry-christmas-title>span {
+	    font-size: 33px;
+	}
+	.merry-christmas-title{
+		float:left;
+		font-size:35px;
+		text-align:center;
+		width:70%;
+		display:block;
+		margin:10px 15% 10px 15%;
+		text-shadow:2px 2px 2px #333;
+	}
+}

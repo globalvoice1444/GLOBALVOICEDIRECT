@@ -1,0 +1,304 @@
+{
+ "sequences": [
+  {
+   "slug": "signup-onboarding",
+   "name": "New signup onboarding (Day 0–30)",
+   "type": "signup",
+   "trigger": "verified_signup",
+   "description": "Lasker line: Your business sounds established from day one — and builds its credit while it does.",
+   "steps": [
+    {
+     "day": 0,
+     "name": "Email 1 · Welcome",
+     "subject": "Welcome to Global Voice Direct — your business line is ready",
+     "preview": "Here is exactly what you bought, and the 3 things to do in your first 10 minutes.",
+     "purpose": "Activation: first login — Restate the purchase and the line; reason why: a dedicated business number keeps personal and business separate and makes a small company look establi",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Welcome to Global Voice Direct. You now have what most small businesses wait years to look like: a dedicated business phone line, with unlimited minutes included in your plan.</p>\n<p style=\"margin:0 0 14px\">Why it matters: when a customer calls a business number and hears a professional greeting, they trust you before you say a word. When you call from your personal cell, they don't.</p>\n<p style=\"margin:0 0 14px\">Your first 10 minutes:<br>1. Sign in to your account.<br>2. Open Phone numbers and confirm your business number.<br>3. Record your greeting so callers hear your company name.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/login\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Sign in to your account</a></p>\n<p style=\"margin:0 0 14px\">We are a real business, with a real office at 165 Halsey St, Suite 106, and real people at (877) 308-5803. Reply to this email any time.</p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 1,
+     "name": "Email 2 · Make it sound like a company",
+     "subject": "Step 1: make your number sound like a company",
+     "preview": "Record a greeting and set up your extensions in a few minutes.",
+     "purpose": "Activation: greeting + extension set up — Specific benefit with reason why: a greeting with your company name and menu makes a one-person shop sound like a staffed office.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">The first thing a caller hears decides whether they think you're a business or a side project. Record a greeting with your company name, and set extensions so calls reach the right person (even if that person is always you).</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/greetings\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Record your greeting</a> Then: <a href=\"https://app.globalvoicedirect.com/user/extensions\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Set up extensions</a></p>\n<p style=\"margin:0 0 14px\">Your business sounds established from day one. This is the step that makes it true.</p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 2,
+     "name": "Nudge · If: verified but no login yet",
+     "subject": "Your account is waiting",
+     "preview": "Get the first sign-in",
+     "purpose": "Get the first sign-in (needs activity data; engine skips until the condition is supported)",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — copy to be written] Get the first sign-in.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "verified_but_no_login_yet"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 3,
+     "name": "Email 3 · Business line everywhere",
+     "subject": "Take your business line everywhere (phone + browser)",
+     "preview": "Install the mobile app and scan one QR code.",
+     "purpose": "Activation: mobile app or browser phone used — Reason why: you keep your personal number private while never missing a business call.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Your business number shouldn't be stuck at a desk. Install the mobile app (App Store or Google Play), then scan the sign-in QR on your Mobile app page. Calls show your business number, not your personal cell, so your private number stays private.</p>\n<p style=\"margin:0 0 14px\">At your computer? Use the browser phone on the WebRTC page, no install needed.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/mobile-app\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Set up the mobile app</a> <a href=\"https://www.youtube.com/watch?v=09zz9mjywDw\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Watch: Set up the mobile app</a> <a href=\"https://app.globalvoicedirect.com/user/webrtc\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Browser phone</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 4,
+     "name": "Nudge · If: no greeting recorded",
+     "subject": "Callers are hearing a blank greeting",
+     "preview": "Greeting nudge",
+     "purpose": "Greeting nudge (needs activity data; engine skips until the condition is supported)",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — copy to be written] Greeting nudge.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "no_greeting_recorded"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 5,
+     "name": "Email 4 · Setup videos",
+     "subject": "The 4 short videos that set up your whole account",
+     "preview": "Credit application, mobile app, fax, SMS — one short video each.",
+     "purpose": "Education / feature adoption — Salesmanship: show, don't claim. Each video proves a specific benefit.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Each of these is short and shows one thing your account already does:</p>\n<p style=\"margin:0 0 14px\">• How to send the business credit application — https://www.youtube.com/watch?v=PNCq8zEjeME<br>• Set up the mobile app — https://www.youtube.com/watch?v=09zz9mjywDw<br>• Start your fax service — https://www.youtube.com/watch?v=r6sN-L-8hm0<br>• Use the SMS campaign platform — https://www.youtube.com/watch?v=qYaCfPpsyUk</p>\n<p style=\"margin:0 0 14px\">Stuck? Click the \"?\" bubble in the bottom-right of any page.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/howtovideo\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Open How-to Videos</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 6,
+     "name": "Nudge · If: no app or browser dialer used",
+     "subject": "Your business calls, on your phone in 2 minutes",
+     "preview": "Resend Email 3 with a new subject",
+     "purpose": "Resend Email 3 with a new subject (needs activity data; engine skips until the condition is supported)",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — copy to be written] Resend Email 3 with a new subject.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "no_app_or_browser_dialer_used"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 7,
+     "name": "Email 5 · Build business credit",
+     "subject": "Your business can start building credit — here's how",
+     "preview": "Send your business credit application so your business is reported correctly.",
+     "purpose": "Retention: high-value differentiator — Big reason why to stay: the account itself works toward business credit; we report to business credit bureaus.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Most phone bills do nothing for your business. Yours can. Global Voice Direct reports to business credit bureaus, and your account shows a $7,500 business credit line.</p>\n<p style=\"margin:0 0 14px\">Why it matters: a business credit history that's separate from your personal credit is what lenders and suppliers look for when you want terms.</p>\n<p style=\"margin:0 0 14px\">Step 1 is sending your business credit application so your information is reported correctly. The video shows how in a few minutes.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/credit-application\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Start your credit application</a> <a href=\"https://www.youtube.com/watch?v=PNCq8zEjeME\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Watch how</a></p>\n<p style=\"margin:0 0 14px\">(Approval and reporting depend on your application and account standing.)</p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 10,
+     "name": "Email 6 · Fax without a machine",
+     "subject": "Fax from your phone or laptop — no machine",
+     "preview": "Your fax service is part of your account. Here's how to turn it on.",
+     "purpose": "Feature adoption: fax — Concrete benefit: no machine, no second line; from any device.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Banks, insurers, government offices and medical offices still ask for faxes. You don't need a machine or another phone line, because your Global Voice Direct account sends and receives faxes from any device.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/fax/send\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Send your first fax</a> <a href=\"https://www.youtube.com/watch?v=r6sN-L-8hm0\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Watch: Start your fax service</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 12,
+     "name": "Nudge · If: credit application not sent",
+     "subject": "The one form that starts your business credit",
+     "preview": "Second credit reminder",
+     "purpose": "Second credit reminder (needs activity data; engine skips until the condition is supported)",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — copy to be written] Second credit reminder.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "credit_application_not_sent"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 14,
+     "name": "Email 7 · Repeat business",
+     "subject": "Turn your customer list into repeat business",
+     "preview": "Use SMS and email campaigns already in your account.",
+     "purpose": "Engagement: campaigns (sticky usage) — Reason why: reminders and promotions bring back customers you already paid to win.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Established businesses follow up. Your account includes an SMS campaign platform: upload your own list and send promotions, appointment reminders or notices from your business.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/sms-campaigns\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Open SMS campaigns</a> <a href=\"https://www.youtube.com/watch?v=qYaCfPpsyUk\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Watch: Use the SMS campaign platform</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 17,
+     "name": "Nudge · If: no call placed yet",
+     "subject": "Place your first call in one click",
+     "preview": "Dialer nudge",
+     "purpose": "Dialer nudge (needs activity data; engine skips until the condition is supported)",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — copy to be written] Dialer nudge.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "no_call_placed_yet"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 21,
+     "name": "Email 8 · Real-person check-in",
+     "subject": "{{first_name}}, a quick check-in from a real person",
+     "preview": "Two minutes to make sure your number, greeting and app are right.",
+     "purpose": "Retention: support touch, catch problems — The business behind the product: a named team, real address, direct phone.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">Three weeks in, here's a 2-minute check:<br>☐ Business number confirmed<br>☐ Greeting recorded<br>☐ Mobile app or browser phone set up<br>☐ Business credit application sent<br>☐ First fax sent</p>\n<p style=\"margin:0 0 14px\">If anything isn't right, reply to this email or call (877) 308-5803. Our team works from 165 Halsey St, Suite 106, and you'll get a real person.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/phone-numbers\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Review your phone numbers</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 24,
+     "name": "Nudge · If: open support issue or no login in 7 days",
+     "subject": "Anything we can fix for you?",
+     "preview": "Catch problems before churn",
+     "purpose": "Catch problems before churn (needs activity data; engine skips until the condition is supported)",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — copy to be written] Catch problems before churn.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "open_support_issue_or_no_login_in_7_days"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 28,
+     "name": "Email 9 · First month recap",
+     "subject": "What your first month built for your business",
+     "preview": "A recap of what's working, and what to do next to keep building.",
+     "purpose": "Conversion/renewal: keep paying — Summarize value delivered; reason to stay: credit history builds with time, numbers customers know shouldn't change.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">In one month your business got a dedicated number with unlimited minutes, a professional greeting, calls on your phone and laptop, fax from any device, and a path to business credit.</p>\n<p style=\"margin:0 0 14px\">Why staying matters: your customers now know your number, and business credit history grows with every month your account stays current. Changing providers resets both.</p>\n<p style=\"margin:0 0 14px\">Your business sounds established — keep building on it.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/login\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Go to your account</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "ACTIVE"
+    },
+    {
+     "day": 30,
+     "name": "Email 10 · Referral",
+     "subject": "Know a business owner? Earn 20% when they join",
+     "preview": "Our referral program pays 20% commission plus a 5% residual.",
+     "purpose": "Advocacy (only when referral program is un-hidden) — Reason why: satisfied customers are the most credible salespeople.",
+     "body": "<p style=\"margin:0 0 14px\">Hi {{first_name}},</p>\n<p style=\"margin:0 0 14px\">If Global Voice Direct has helped your business, chances are another owner you know needs the same. Share your referral link and earn 20% commission plus a 5% residual.</p>\n<p style=\"margin:0 0 14px\"><a href=\"https://app.globalvoicedirect.com/user/referral_dashboard\" style=\"display:inline-block;background:#FF5000;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:10px;margin:4px 4px 4px 0\">Open referral dashboard</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "DRAFT"
+    }
+   ]
+  },
+  {
+   "slug": "winback-lost-customers",
+   "name": "Win-back: lost customers",
+   "type": "winback",
+   "trigger": "segment",
+   "description": "Enrolled only by an admin-selected segment. All copy is DRAFT pending review.",
+   "steps": [
+    {
+     "day": 0,
+     "name": "Win-back 1 · Apology",
+     "subject": "We fixed what got in your way",
+     "preview": "Broken links and email problems are fixed. One thing to try today.",
+     "purpose": "Own the broken links/email issues briefly; point to one fixed thing (one-second calls).",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — final win-back copy pending review]</p><p>Own the broken links/email issues briefly; point to one fixed thing (one-second calls).</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 4,
+     "name": "Win-back 2 · Before and after",
+     "subject": "Before: a stuck dialer. Now: calls connect in about a second",
+     "preview": "See the old flow next to the new one.",
+     "purpose": "Show, not claim: old painful flow vs new working dialer.",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — final win-back copy pending review]</p><p>Show, not claim: old painful flow vs new working dialer.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "DRAFT"
+    },
+    {
+     "day": 10,
+     "name": "Win-back 3 · Personal note from the owner",
+     "subject": "A personal note, and a quick walkthrough if you want one",
+     "preview": "Not another broadcast: a 15-minute walkthrough on your schedule.",
+     "purpose": "Owner note for highest-value lost accounts; offer a walkthrough call.",
+     "body": "<p>Hi {{first_name}},</p><p>[DRAFT — final win-back copy pending review]</p><p>Owner note for highest-value lost accounts; offer a walkthrough call.</p><p><a href=\"{{login_url}}\">Sign in to your account</a></p>",
+     "cond": {
+      "all": [
+       "account_active"
+      ]
+     },
+     "status": "DRAFT"
+    }
+   ]
+  },
+  {
+   "slug": "dunning-payment",
+   "name": "Payment reminders (dunning)",
+   "type": "dunning",
+   "trigger": "manual",
+   "description": "Placeholder — no steps yet.",
+   "steps": []
+  },
+  {
+   "slug": "reengage-inactive",
+   "name": "Re-engagement: inactive accounts",
+   "type": "reengage",
+   "trigger": "manual",
+   "description": "Placeholder — no steps yet.",
+   "steps": []
+  }
+ ]
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Audio Broadcast</title>
+
+<script type="text/javascript"><!--
+
+	var counter = 1;
+	var i = 0;
+	var acc = "";
+	var pass = "";
+	var ivn = "";
+	var numbers = "";
+	var host = "";
+	var t = "";
+
+	var newscript = function(url) {
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = url;
+		document.getElementsByTagName('head')[0].appendChild(script);
+		document.getElementsByTagName('head')[0].removeChild(script);
+		clearTimeout(t);
+	}
+	
+	function file_upload(form, action_url, div_id) {
+		var iframe = document.createElement("iframe");
+	    iframe.setAttribute("id", "upload_iframe");
+	    iframe.setAttribute("name", "upload_iframe");
+	    iframe.setAttribute("style", "display:none;");
+	 
+	    // Add to document...
+	    form.parentNode.appendChild(iframe);
+	    window.frames['upload_iframe'].name = "upload_iframe";
+	 
+	    iframeId = document.getElementById("upload_iframe");
+	 
+	    // Add event...
+	    var eventHandler = function () {
+
+	            if (iframeId.detachEvent) { iframeId.detachEvent("onload", eventHandler); }
+	            else { iframeId.removeEventListener("load", eventHandler, false); }
+	 
+	            // Message from server...
+	            var content = iframeId.contentDocument.body.innerHTML;
+	            if (content == '') { var status = '<span style="color:red">Error has occured</span>'; }
+	            else { var status = '<span style="color:green">Successfully uploaded</span>'; }
+
+	           	document.getElementById(div_id).innerHTML = content;
+	           	document.getElementById('upload_status').innerHTML = status;
+	 
+	            // Del the iframe...
+	            setTimeout('iframeId.parentNode.removeChild(iframeId)', 250);
+	        }
+	 
+	    if (iframeId.addEventListener) iframeId.addEventListener("load", eventHandler, true);
+	    if (iframeId.attachEvent) iframeId.attachEvent("onload", eventHandler);
+	 
+	    // Set properties of form...
+	    form.setAttribute("target", "upload_iframe");
+	    form.setAttribute("action", action_url);
+	    form.setAttribute("method", "post");
+	    form.setAttribute("enctype", "multipart/form-data");
+	    form.setAttribute("encoding", "multipart/form-data");
+	 
+	    // Submit the form...
+	    form.submit();
+	 
+	    document.getElementById(div_id).innerHTML = "Uploading...";
+	}
+
+	function go() {
+		i = 0;
+		counter = 1;
+
+		document.getElementById('progress').style.width = 0 + '%';
+		document.getElementById('counter').innerHTML = 0;
+		document.getElementById('calling').innerHTML = "";
+		document.getElementById('total').innerHTML = " out of 0";
+
+		acc = document.getElementById("acct").value;
+		pass = document.getElementById("pwd").value;
+		ivn = document.getElementById("ivn").value;
+		numbers = document.getElementById("list").value.replace(/ /g,'').split("\n"); // get the values, remove all spaces
+
+		if (document.main.Account.value) {
+			if (document.main.IVR_Number.value) {
+				if (document.main.Password.value) {
+					if (numbers[0] != "") { // check if there is at least one number in the list
+						document.getElementById('status').innerHTML = "please wait...";
+						check(acc,pass);
+					} else {
+						alert("Please specify at least one number to call");
+					}
+				} else {
+					alert("Password is not specified");
+				}
+			} else {
+				alert("Source number is not specified");
+			}
+		} else {
+			alert("Account is not specified");
+		}
+	}
+
+	function check(acc,pass) {
+		if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp = new XMLHttpRequest();
+		}
+		else { // code for IE5, IE6
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				var result = xmlhttp.responseText.split(",");
+				document.getElementById('status').innerHTML = result[1];
+				if (result[0] == "ok") {
+					document.getElementById('status').innerHTML = "authorization successful";
+					if (result[1]) {
+						host = result[1];
+						call();
+					}
+				}
+				else if (result[0] == "blocked") {
+					document.getElementById('status').innerHTML = "the account " + acc + " is blocked";
+				}
+				else if (result[0] == "credit_exceeded") {
+					document.getElementById('status').innerHTML = "the account " + acc + " is credit exceeded";
+				}
+				else if (result[0] == "expired") {
+					document.getElementById('status').innerHTML = "the account " + acc + " is expired";
+				}
+				else {
+					document.getElementById('status').innerHTML = "account ID or password is incorrect";
+				}
+			}
+		}
+
+		if (xmlhttp == null) {
+			alert ("Your browser does not support AJAX");
+			return;
+          	} else {
+			xmlhttp.open("GET","check.php?acc=" + acc + "&pass=" + pass, true);
+			xmlhttp.send();
+		}
+	}
+
+	function call() {
+		document.getElementById('total').innerHTML = " out of " + numbers.length;
+		if (i < numbers.length) {
+			count = (i+1)/numbers.length;
+			a = 'call.php?Account='+acc+'&Password='+pass+'&First_Phone_Number='+numbers[i]+'&Second_Phone_Number='+ivn+'&host='+host;
+			number = numbers[i];
+			xmlhttp.open("GET",a, true);
+			xmlhttp.send();
+			drawProgress(count, number);
+			t = setTimeout("call()", 1000);
+			i++;
+		}
+		else {
+			alert("Called " + numbers.length + " number(s)");
+			window.location.reload();
+		}
+	}
+
+	function drawProgress(count, number) {
+		document.getElementById('progress').style.width = count * 100 + '%';
+		document.getElementById('counter').innerHTML = counter++;
+		document.getElementById('calling').innerHTML = number;
+	}
+
+--></script>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+<body><center>
+<h3>Audio Broadcast</h3>
+<div id="form-div">
+<form id="cbform" method="post" name="main" action="">
+	<input name="Action" value="Connect Us Now!" type="hidden">
+	<div>
+		<label for="acct" accesskey="A">Account:</label>
+		<input id="acct" name="Account" maxlength="15" type="text"><br>
+	
+		<label for="pwd" accesskey="P">Password:</label>
+		<input id="pwd" name="Password" maxlength="15" type="password"><br>
+	
+		<label for="ivn" accesskey="H">IVR number:</label>
+		<input id="ivn" name="IVR_Number" maxlength="15" type="text"><br>
+	
+		<label for="list" accesskey="S">Numbers list:</label>
+		<textarea id="list" name="List_of_Numbers" rows="4" cols="20"></textarea>
+	</div>
+	<input id="submitButton" onClick="go();" value="Connect" type="button">
+</form>
+<form id="upload" action="">
+	<input type="file" name="file" id="file" onchange="file_upload(this.form,'check.php','list'); return false;" >
+	<div id="upload_status"></div>
+</form>
+</div>
+
+<div id="progressbar">
+	<div>
+	<label for="status" accesskey="M">Status: <span id="status"></span></label><br>
+	<label for="counter" accesskey="R">Calls initiated: <span id="counter"> 0 </span><span id="total"> out of 0</span></label><br>
+	<label for="calling" accesskey="C">Now calling: <span id="calling"></span></label><br></div>
+	<div style="border: 1px solid black; width:100%; height:0.5em;margin-top:5px;">
+		<div id="progress" style="height:0.5em; width:0%; background-color:#135791; float:left;"></div>
+	</div>
+</div>
+</center></body></html>

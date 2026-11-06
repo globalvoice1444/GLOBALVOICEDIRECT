@@ -1,0 +1,808 @@
+/*
+Website Name:
+Website URI:
+Author Company:
+Author Name: Nabeel Akbar
+Author URI:
+Use it to make some new Design Or Layout
+*/
+*{
+	padding:0;
+	margin:0;
+	outline: 0;
+}
+*:focus {
+	outline: 0;
+}
+html {
+	height: 100%;
+}
+body {
+	min-height: 100%;
+	position: relative;
+	background-color: #e9edf0;
+}
+@font-face {
+	font-family: 'Proxima Nova Light';
+	src: url('../fonts/Proxima Nova Light.eot');
+	src: url('../fonts/Proxima Nova Light.woff2') format('woff2'), url('../fonts/Proxima Nova Light.eot?#iefix') format('embedded-opentype');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'ProximaNova-Light';
+	src: url('../fonts/ProximaNova-Light.woff') format('woff'), url('../fonts/ProximaNova-Light.ttf') format('truetype'), url('../fonts/ProximaNova-Light.svg#ProximaNova-Light') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Proxima Nova Rg';
+	src: url('../fonts/ProximaNova-Regular.woff2') format('woff2'), url('../fonts/ProximaNova-Regular.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Proxima Nova Sb';
+	src: url('../fonts/proxima_nova_semibold-webfont.woff2') format('woff2'), url('../fonts/proxima_nova_semibold-webfont.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Proxima Nova B';
+	src: url('../fonts/ProximaNova-Bold.woff2') format('woff2'), url('../fonts/ProximaNova-Bold.woff') format('woff');
+	font-weight: bold;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'OpenSans-Regular';
+	src: url('../fonts/OpenSans-Regular.eot');
+	src: url('../fonts/OpenSans-Regular.woff2') format('woff2'),
+	url('../fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'OpenSans';
+	src: url('../fonts/OpenSans.woff') format('woff'),
+	url('../fonts/OpenSans.ttf') format('truetype'),
+	url('../fonts/OpenSans.svg#OpenSans') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'OpenSans-Semibold';
+	src: url('../fonts/OpenSans-Semibold.eot');
+	src: url('../fonts/OpenSans-Semibold.woff2') format('woff2'),
+	url('../fonts/OpenSans-Semibold.woff') format('woff'),
+	url('../fonts/OpenSans-Semibold.ttf') format('truetype'),
+	url('../fonts/OpenSans-Semibold.svg#OpenSans-Semibold') format('svg'),
+	url('../fonts/OpenSans-Semibold.eot?#iefix') format('embedded-opentype');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'OpenSans-Bold';
+	src: url('../fonts/OpenSans-Bold.eot');
+	src: url('../fonts/OpenSans-Bold.woff2') format('woff2'),
+	url('../fonts/OpenSans-Bold.woff') format('woff'),
+	url('../fonts/OpenSans-Bold.ttf') format('truetype'),
+	url('../fonts/OpenSans-Bold.svg#OpenSans-Bold') format('svg'),
+	url('../fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype');
+	font-weight: normal;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'OpenSans-Light';
+	src: url('../fonts/OpenSans-Light.eot');
+	src: url('../fonts/OpenSans-Light.woff2') format('woff2'),
+	url('../fonts/OpenSans-Light.woff') format('woff'),
+	url('../fonts/OpenSans-Light.ttf') format('truetype'),
+	url('../fonts/OpenSans-Light.svg#OpenSans-Light') format('svg'),
+	url('../fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+a{
+	text-decoration: none;
+}
+/*Admin-section*/
+.dashboard-section {
+	display: inline-block;
+	padding-bottom: 50px;
+	width: 100%;
+}
+.left-column {
+	background: none repeat scroll 0 0 #fff;
+	box-shadow: 0 0 5px 0 #d9dcdf;
+	display: block;
+	float: left;
+	height: 100%;
+	padding: 0 15px 0 16px;
+	position: fixed;
+	width: 210px;
+}
+.right-column {
+	box-sizing: border-box;
+	float: left;
+	padding-left: 211px;
+	vertical-align: top;
+	width: 100%;
+	background-color:#e9edf0;
+}
+.left-menu ul a {
+	border: 1px solid transparent;
+	border-radius: 5px;
+	color: #636363;
+	display: block;
+	font-family: "Proxima Nova Rg";
+	font-size: 14px;
+	padding: 9px 0 9px 10px;
+	text-decoration: none;
+}
+.left-menu ul a i {
+	font-size: 16px;
+	margin-right: 10px;
+	vertical-align: top;
+	color: #929292;
+	margin-top: 2px;
+}
+.left-menu ul li:hover a,.left-menu ul a:hover, .left-menu ul .select-item a {
+	background-color: #36a6c6;
+	border-color: #36a6c6;
+	color: #fff;
+}
+.left-menu ul li.select-item a i,
+.left-menu ul li:hover a i{
+	color: #fff;
+}
+.logo-row {
+	padding: 30px 0 20px;
+}
+
+.logo-row img {
+	max-width: 100%;
+}
+.admin-top-header {
+	background-color: #1772cf;
+}
+.dropdown-toggle.user-content:hover, .dropdown-toggle.user-content:focus, .nav .open .dropdown-toggle.user-content {
+	background-color: transparent;
+}
+.navbar-nav a.dropdown-toggle {
+	padding: 10px 10px;
+}
+.admin-top-header p {
+	color: #fff;
+	text-align: center;
+	margin: 0px;
+	padding: 10px;
+	font-size: 16px;
+	font-family: 'ProximaNova-Light';
+}
+.admin-content {
+	padding: 15px 22px;
+	display: inline-block;
+	width: 100%;
+	position: relative;
+}
+.top-title h3 {
+	color: #fff;
+	font-size: 22px;
+	margin: 0 0 5px;
+	font-family: 'Proxima Nova Sb';
+}
+.top-title p {
+	color:#a5a5a5;
+	font-size:16px;
+	margin:0;
+	font-family: 'ProximaNova-Light';
+}
+.form-horizontal .form-group, .form-group {
+	margin:0 0 20px;
+	display:inline-block;
+	width:100%;
+}
+.space-left-0 {
+	padding-left: 0;
+}
+.space-right-0 {
+	padding-right: 0;
+}
+textarea.form-control,div.form-control,
+input.form-control, select.form-control {
+	border: 1px solid #e2e6e9;
+	border-radius: 0;
+	box-shadow: none;
+}
+textarea.form-control {
+	min-height: 100px;
+	resize: none;
+}
+div.form-control,
+input.form-control, select.form-control {
+	height: 37px;
+}
+.dataTables_length select, select.form-control {
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	background-image: url("../images/caredt-icon.png");
+	background-repeat: no-repeat;
+	background-position: calc(100% - 12px);
+	font-size:11px;
+	color:#abaaaa;
+}
+.dataTables_length select option,select.form-control option {
+	padding: 6px 12px;
+}
+.profile-setting .form-control  .checkbox-new input[type="radio"]:checked ~ label::after,
+.checkbox-new input[type="checkbox"]:checked ~ label::after,
+.checkbox-new input[type="radio"]:checked ~ label::after {
+	background-image: url("../images/dout-icon.png");
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: 6px auto;
+	border-color: #36a6c6;
+}
+.checkbox-new.only-chakbox  input[type="checkbox"]:checked ~ label::after {
+	background-image: url("../images/check-icon.png");
+}
+.profile-setting .form-control  .checkbox-new input[type="radio"], .checkbox-new input[type="checkbox"],
+.checkbox-new input[type="radio"], .checkbox-new input[type="checkbox"] {
+	height: 14px;
+	left: 0;
+	margin: 0;
+	opacity: 0;
+	position: absolute;
+	top: 2px;
+	width: 14px;
+	z-index: 1;
+}
+.notice {
+	text-align: center;
+    margin-top: -15px;
+    background-color: #36a6c6;
+    margin-bottom: 20px;
+}
+.notice h3{
+	margin-top: 6px;
+    color: #ff4f00;
+}
+
+.checkbox-new.only-chakbox label::after {
+	border-radius: 0px;
+}
+.profile-setting .form-control .checkbox-new label::after,
+.checkbox-new label::after {
+	background: #fff;
+	border: 1px solid #d4d7d8;
+	content: "";
+	height: 14px;
+	left: 0;
+	position: absolute;
+	top: 2px;
+	width: 14px;
+	border-radius:50%;
+}
+.checkbox-new.radio-new {
+	display: inline-block;
+	position: relative;
+}
+.bg-white {
+	background-color: #fff;
+	border-radius: 5px;
+	display: inline-block;
+	padding: 25px 18px;
+	width: 100%;
+	margin: 15px 0 20px;
+	position: relative;
+	z-index: 99;
+}
+.top-title {
+	position: relative;
+	z-index: 99;
+}
+.admin-content:before {
+	content: "";
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	background-color: #36a6c6;
+	height: 361px;
+	z-index: 9;
+	left: 0;
+}
+.form-inline label,
+.form-group label {
+	color: #5e5e5e;
+	font-size: 13px;
+	font-weight: 400;
+	font-family: 'Proxima Nova Rg';
+}
+.checkbox-new label {
+	padding: 0 18px 0px 20px;
+	margin:0;
+}
+.cus-thumbnail,.border-box {
+	border: 1px solid #e2e6e9;
+	display: inline-block;
+	width: 100%;
+	padding: 15px;
+	margin:0 0 15px 0;
+}
+.top-title.border-bootm > h3 {
+	border-bottom: 1px solid #e2e6e9;
+	color: #404041;
+	font-size: 17px;
+	margin: 0 0 18px;
+	padding: 0 0 15px;
+}
+.nav.nav-tabs.mobile-tabe li  a,.nav.nav-tabs > li > a {
+	border: 1px solid #e2e6e9;
+	border-radius: 0;
+	margin-right: -1px ;
+	color:#8b8b8b;
+	font-size:14px;
+	font-family: 'Proxima Nova Sb';
+	position:relative;
+	padding:15px;
+	text-align:center;
+}
+.nav.nav-tabs.mobile-tabe li.active  a:before,.nav.nav-tabs li.active a:before{
+	content:"";
+	position:absolute;
+	width:100%;
+	height:3px;
+	top:0;
+	background-color:#36a6c6;
+	left:0;
+}
+.nav.nav-tabs.mobile-tabe li.active  a,.nav.nav-tabs > li.active > a {
+	color:#36a6c6;
+	outline:none;
+	border-bottom:1px solid transparent;
+}
+.nav.nav-tabs {
+	border-bottom: none;
+}
+.nav.nav-tabs li a.tab-add {
+	color:#36a6c6;
+	font-size: 30px;
+	line-height: 20px;
+	min-width: 60px;
+}
+.footer-text p {
+	color: #636363;
+	font-size: 13px;
+	margin: 0;
+}
+.footer {
+	background-color: #fff;
+	bottom: 0;
+	clear: both;
+	padding: 15px 0;
+	position: absolute;
+	width: 100%;
+}
+
+.top-title h3 span {
+	font-size: 18px;
+	font-family: 'Proxima Nova Light';
+}
+.form-control.input-176 {
+	width: 100%;
+	max-width: 176px;
+	margin-left: 10px;
+	margin-right: 15px;
+}
+table.table-bordered {
+	border: none;
+}
+.icon-ring a {
+	width: 27px;
+	height: 27px;
+	border-radius: 50%;
+	border: 1px solid #aeaeae;
+	color: #aeaeae;
+	text-align: center;
+	display: inline-block;
+	padding: 5px 2px;
+	background-color: #fff;
+	font-size: 14px;
+	vertical-align: middle;
+}
+.icon-ring a:hover {
+	color: #fff;
+	border-color: #f68d1f;
+	background-color: #f68d1f;
+}
+.icon-ring {
+	min-width: 90px;
+}
+.log-table > tbody > tr:nth-of-type(2n+2) {
+	background-color: #f6f7f7;
+}
+.log-table.d-storage > tbody tr > td:nth-of-type(2) p{
+	max-width: 98%;
+}
+.log-table.d-storage > tbody tr > td:nth-of-type(3) p,
+.log-table > tbody tr > td:nth-of-type(2) p {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 95%;
+	white-space: nowrap;
+	width: 100%;
+}
+.log-table > tbody tr:first-child td{
+	border-top: 0px;
+}
+.log-table tr > td:first-child p {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 158px;
+	white-space: nowrap;
+	width: 100%;
+}
+.result-table thead,
+.log-table thead {
+	background-color: #f6f7f7;
+	border: 1px solid #e2e6e9;
+}
+table.dataTable.log-table thead th,
+.result-table thead tr > th,
+.log-table thead tr > th {
+	color: #3a3a3a;
+	font-size: 14px;
+	font-family: 'Proxima Nova Sb';
+	font-weight: normal;
+	padding: 16px 8px;
+}
+.log-table tbody tr > td,
+.log-table thead tr > th {
+	border: none;
+}
+table.dataTable.log-table tbody td,
+.result-table tbody tr > td,
+.log-table tbody tr > td {
+	color: #5d5d5d;
+	font-family: 'ProximaNova-Light';
+	vertical-align: middle;
+	padding: 11.5px 8px;
+}
+.log-table td p {
+	color: #2171cb;
+	margin: 0;
+}
+
+.admin-top-header .open > .dropdown-menu {
+	-webkit-transform: scale(1);
+	-moz-transform: scale(1);
+	-o-transform: scale(1);
+	-ms-transform: scale(1);
+	transform: scale(1);
+	-webkit-transform-origin: 29px -50px;
+	-moz-transform-origin: 29px -50px;
+	-o-transform-origin: 29px -50px;
+	-ms-transform-origin: 29px -50px;
+	transform-origin: 29px -50px;
+}
+.admin-top-header .dropdown-menu {
+	-webkit-transform-origin: top;
+	transform-origin: top;
+	-webkit-animation-fill-mode: forwards;
+	animation-fill-mode: forwards;
+	-webkit-transform: scale(0);
+	-moz-transform: scale(0);
+	-o-transform: scale(0);
+	-ms-transform: scale(0);
+	transform: scale(0);
+	display: block;
+	-webkit-transition: all 370ms cubic-bezier(0.34, 1.61, 0.7, 1);
+	-moz-transition: all 370ms cubic-bezier(0.34, 1.61, 0.7, 1);
+	-o-transition: all 370ms cubic-bezier(0.34, 1.61, 0.7, 1);
+	-ms-transition: all 370ms cubic-bezier(0.34, 1.61, 0.7, 1);
+	transition: all 370ms cubic-bezier(0.34, 1.61, 0.7, 1);
+}
+.admin-top-header .dropdown-menu {
+	right: 20px;
+}
+.admin-top-header .dropdown ul.dropdown-menu::before {
+	content: "";
+	border-bottom: 10px solid #fff;
+	border-right: 10px solid transparent;
+	border-left: 10px solid transparent;
+	position: absolute;
+	top: -10px;
+	right: 16px;
+	z-index: 10;
+}
+.form-group small {
+	font-size: 12px;
+	color: #a5a5a5;
+	font-family: 'Proxima Nova Rg';
+}
+.form-group a label:hover {
+	text-decoration: underline;
+}
+.form-group a label {
+	cursor: pointer;
+	color: #f68d1f;
+}
+.btn-addentry:focus,
+.btn-addentry {
+	border: 1px solid #616161;
+	color: #fff;
+	font-family: 'ProximaNova-Light';
+	font-size: 13px;
+	padding: 9.7px 10px;
+	background-color: #3a3a3a;
+	outline: 0;
+	margin: 0 0px 0 10px;
+}
+.btn-addentry > span {
+	vertical-align: middle;
+}
+.btn-addentry i {
+	width: 18px;
+	height: 18px;
+	display: inline-block;
+	border-radius: 50%;
+	background-color: #f68d1f;
+	font-style: normal;
+	font-size: 18px;
+	font-weight: bolder;
+	line-height: 17px;
+	vertical-align: middle;
+	margin-right: 2px;
+}
+div#sidebar {
+    overflow: auto;
+}
+select.form-control {
+	font-size: 13px;
+	font-family: 'Proxima Nova Rg';
+}
+.cus-pagination .pagination > li:first-child > a, .cus-pagination .pagination > li:first-child > span,
+.cus-pagination .pagination > li:last-child > a, .cus-pagination .pagination > li:last-child > span,
+.cus-pagination .pagination {
+	border-radius: 0px;
+}
+.cus-pagination .pagination a{
+	font-size: 13px;
+	color: #959595;
+	font-family: 'Proxima Nova Rg';
+}
+.cus-pagination  .pagination > li > a.active, .cus-pagination  .pagination > li > a.active:hover,
+.cus-pagination  .pagination > li > a:focus, .cus-pagination  .pagination > li > a:hover {
+	background-color: #36a6c6;
+	color: #fff;
+	border-color: #36a6c6;
+}
+
+.Information-tab .form-inline {
+	display: inline-block;
+	width: 100%;
+}
+.Information-tab .form-control {
+	float: right;
+	width: 100%;
+	margin-bottom: 9px;
+}
+.Information-tab label {
+	margin: 10px 0 0 0;
+}
+.Information-tab .form-group label {
+	margin-bottom: 6px;
+	margin-top: 5px;
+}
+.Information-tab .form-group {
+	margin-bottom:0px;
+}
+.Information-tab .form-group p {
+	margin-bottom: 6px;
+	margin-top: 5px;
+	font-family: 'Proxima Nova Sb';
+}
+.margint-20 {
+	margin-top: 20px;
+}
+.margint-30 {
+	margin-top: 30px;
+}
+.btn-blue {
+	background-color: #36a6c6;
+	border-color: #36a6c6;
+	color: #fff;
+	text-transform: uppercase;
+	border-radius: 2px;
+	padding: 5px 13px;
+}
+.space-right {
+	padding-right: 0px;
+}
+.two-control .form-control {
+	width: 50%;
+	float: right;
+}
+.log-table{
+	margin-bottom: 0px;
+}
+.log-table tbody {
+	border: 1px solid #ddd;
+	border-collapse: collapse;
+}
+.log-table td span {
+	font-size: 14px;
+	font-family: 'Proxima Nova Sb';
+	text-transform: uppercase;
+}
+.blue-text {
+	color: #36a6c6;
+}
+.orange-text {
+	color: orange;
+}
+.red-text {
+	color: red;
+}
+input.border-color{
+	border-color: red;
+}
+.green-text {
+	color: green;
+}
+.log-table label {
+	margin: 0px;
+	font-weight: 400;
+}
+.btn-statement {
+	padding: 5px 10px;
+	border: 1px solid;
+	font-family: 'Proxima Nova Sb';
+}
+.border-box.payment-box h3 {
+	margin: 0px;
+	border-bottom: 0px;
+	padding-bottom: 10px;
+}
+.border-box.payment-box .top-title {
+	border-bottom: 1px solid #e2e6e9;
+	padding-bottom: 7px;
+	margin-bottom: 10px;
+}
+.border-box.payment-box .form-group p {
+	font-size: 14px;
+	margin: 0px;
+}
+.border-box.payment-box {
+	box-shadow: 0px 0 8px rgba(0,0,0,0.2);
+	height: 160px;
+}
+h3.simple-title {
+	font-size: 22px;
+	margin: 0 0 15px;
+	font-family: 'Proxima Nova Sb';
+	color: #404041;
+}
+.row.cart-body .btn.btn-info {
+	float: none;
+	margin: 0 auto;
+	text-align: center;
+	display: inherit;
+}
+.row.cart-body .form-horizontal {
+	margin-bottom: 25px;
+}
+.row.cart-body .row {
+	margin: 0;
+}
+
+@media only screen and (max-width:991px ){
+	.right-column {
+		padding-left: 0px;
+	}
+	#sidebar.left-column {
+		display: none;
+	}
+	.sidebar-toggle {
+		display: inline-block;
+		position: fixed;
+		left: 210px;
+		top: 25%;
+		z-index: 9999;
+		font-size: 20px;
+		padding: 7px;
+		background-color: #36a6c6;
+		color: #fff;
+		border: 0;
+		border-radius: 2px;
+	}
+	.sidebar-toggle.collapsed {
+		left: 0;
+	}
+	#sidebar.left-column.in {
+		display: inline-block;
+		z-index: 999;
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: auto;
+		box-shadow: 45px 0 88px rgb(95, 95, 95,0.2);
+	}
+	.sidebar-toggle i::before {
+		content: "\f00d";
+	}
+	.sidebar-toggle.collapsed i::before {
+		content: "\f03a";
+	}
+	#sidebar.left-column {
+		max-height: 100%;
+		overflow: auto;
+	}
+}
+
+@media only screen and (max-width:620px ){
+	.admin-content {
+		padding: 15px 15px;
+	}
+	.nav.nav-tabs.mobile-tabe li a, .nav.nav-tabs > li > a {
+		padding: 7px 8px;
+		font-size: 12px;
+	}
+	.top-title h3 {
+		font-size: 18px;
+	}
+	.Information-tab .form-control {
+		float: none;
+		width: 100%;
+		margin-bottom: 0;
+	}
+	.margint-30 {
+		margin-top: 0;
+	}
+	.border-box.payment-box {
+		height: auto;
+	}
+	.top-title.border-bootm > h3 {
+		font-size: 14px;
+		margin: 0 0 0px;
+		padding: 0 0 5px;
+	}
+	.h3, h3 {
+		font-size: 20px;
+	}
+	.border-box .btn.btn-info.btn-blue {
+		margin-top: 10px;
+	}
+}
+@media only screen and (max-width:480px ){
+	.bg-white {
+		padding: 8px 8px;
+	}
+	.border-box > .border-box {
+		padding: 0;
+		border: 0;
+	}
+	.top-title.border-bootm > h3 {
+		font-size: 14px;
+		margin: 0 0 15px;
+		padding: 0 0 15px;
+	}
+	.Information-tab .form-control {
+		float: none;
+		width: 100%;
+		margin-bottom: 0;
+	}
+	table.dataTable.log-table thead th, .result-table thead tr > th, .log-table thead tr > th {
+		font-size: 12px;
+		padding: 10px 6px;
+	}
+	table.dataTable.log-table thead th, .result-table thead tr > th, .log-table thead tr > th {
+		font-size: 12px;
+	}
+	.log-table tbody tr > td, .log-table thead tr > th,.log-table td span {
+		font-size: 12px;
+	}	
+}

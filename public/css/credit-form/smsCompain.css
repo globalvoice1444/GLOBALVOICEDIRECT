@@ -1,0 +1,98 @@
+.credit-info {
+     
+}
+.quote-count {
+    display: inline-block;
+    margin-left: 10px;
+}
+.credit-balance {
+    display: inline-block;
+    margin-right: 10px;
+    border-right: 2px solid grey;
+    width: 102px;
+}
+.credit-balance span {
+    margin-right: 10px;
+}
+.quote-count span {
+    margin-right: 10px;
+}
+.main-credit-container {
+    float: right;
+   /* margin-right: 6%;*/
+}
+.navigation-tabs {
+    padding: 35px 0 30px 15px;
+}
+.left-sms-inner-section {
+    border: 1px solid #3183d7;
+    margin: 0px 0px 30px 0px;
+    box-shadow: 0px #000;
+    box-shadow: 1px 1px 1px 1px #888888;
+}
+.sms-section-title h2 {
+    font-size: 18px;
+    color: #807d7d;
+}
+.main-container {
+    margin: 20px;
+}
+.sms-section-content i.fa.fa-chevron-right {
+    margin-right: 18px;
+    font-size: 16px;
+    color: #3183d7;
+    padding-bottom: 15px;
+}
+.col-md-12.sms-section-header {
+    border-bottom: 2px solid #eeeeee;
+    margin-bottom: 25px;
+    padding-bottom: 5px;
+}
+.sms-section-content.col-md-12 {
+    margin-bottom: 25px;
+}
+.sms-section-content .space-right {
+    padding: 5px;
+}
+.sms-section-content .form-control{
+	width: 100% !important;
+}
+.sms-section-content .top-title h3 {
+    font-size: 22px;
+}
+.sms-section-content .top-title.border-bootm {
+    margin-bottom: 25px;
+    border-bottom: 2px solid #eeeeee;
+    width: 75%;
+}
+.top-title.border-bootm.add-ind-con-group {
+    width: 80% !important;
+}
+.sms-section-content .form-inline .row {
+    margin-bottom: 25px;
+}
+span.col-lg-6.number-notes {
+    color: red;
+}
+#smsContactTable_wrapper .form-control {
+	display: inline-block;
+	width: auto !important;
+}
+textarea.form-control {
+    height: 100px;
+}
+.top-title-send-sms {
+	width: 80% !important;
+}
+.sent-sms-detail .modal-content {
+    padding: 15px;
+}
+.sent-sms-detail {
+	top: 20px;
+}
+.row.credit-sms-note-info {
+    color: red;
+}
+.credit-info {
+    margin-bottom: 5%;
+}

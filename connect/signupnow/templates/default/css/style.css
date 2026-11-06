@@ -1,0 +1,207 @@
+/*
+Website Name: globalvoicedirect
+Website URI: http://globalvoicedirect.com
+Author Name: Nabeel Akbar
+Date 11/Mar/2018
+Use it to make some new Design Or Layout
+*/
+.new-form.form-horizontal div.form-group {
+	margin: 0 -5px 10px -5px;
+}
+.new-form .form-control {
+	box-shadow: none;
+	border-radius: 2px;
+}
+.new-form .control-label {
+	font-weight: normal;
+	font-size: 13px;
+}
+.top-banr {
+	background-size: 1920px auto;
+	background-image: url("https://globalvoicedirect.com/wp-content/uploads/2015/05/title-image.jpg");
+	height: 220px;
+	background-color: rgb(0, 107, 175);
+	background-position: center 0px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 40px;
+}
+.top-banr h1 {
+	margin: 0px;
+	color: #fff;
+	font-size: 40px;
+}
+.action-button {
+	width: 97px;
+	background: #91B2C3;
+	font-weight: bold;
+	color: white;
+	border: 0 none;
+	border-radius: 25px;
+	cursor: pointer;
+	padding: 9px 5px;
+	margin: 10px 5px;
+}
+.action-button:hover, .action-button:focus {
+	background: #303030;
+}
+.nav-steps li a:hover,.nav-steps li a {
+	border-right: 1px solid #dddddd;
+	border-radius: 0px;
+	border-collapse: collapse;
+}
+.nav-steps li:not(.active) > .cursor-default.text-muted:hover,
+.nav-steps li a.text-muted:hover,.nav-steps li.active a:hover, .nav-steps li a.text-muted {
+	color: #78A300 !important;
+	border-right-color: #dddddddd !important;
+	border-top: none;
+}
+#address-info {
+	display: inline-block;
+}
+.new-form > div.row {
+	border: 1px solid #dddddd;
+	padding: 0px;
+	border-collapse: collapse;
+}
+.nav-steps li.first a {
+	border-left: 0px;
+}
+.nav-steps li.last a {
+	border-right: 0px;
+}
+.nav-steps li.active a {
+	border-top: 0px;
+}
+.new-form .to-validate {
+	max-width: 570px;
+	margin: 0 auto;
+	width: 100%;
+}
+.row.pading-set {
+	margin: 0px;
+}
+.pading-set > div {
+	padding: 0px;
+}
+.pading-set > div:first-child {
+	padding-right: 6px;
+}
+.pading-set > div:last-child {
+	padding-left: 6px;
+}
+.new-form #recaptcha_response_field {
+	height: 28px;
+}
+.new-form .img-thumbnail {
+	display: block;
+	width: auto;
+	max-width: 350px;
+	margin: 5px auto;
+}
+.new-form #recaptcha_widget .control-label {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+.new-form #recaptcha_widget .input-group {
+	max-width: 315px;
+	margin: 0 auto;
+}
+.nav-steps li a.text-muted {
+	background-image: url('../img/tick-icon.png');
+	background-position: 20px center;
+	background-repeat: no-repeat;
+}
+
+/*footer*/
+footer.uncover {
+	z-index: 99;
+	-webkit-transition: left .33s cubic-bezier(.694,.0482,.335,1);
+	-moz-transition: left .33s cubic-bezier(.694,.0482,.335,1);
+	-o-transition: left .33s cubic-bezier(.694,.0482,.335,1);
+	-ms-transition: left .33s cubic-bezier(.694,.0482,.335,1);
+	transition: left .33s cubic-bezier(.694,.0482,.335,1);
+	-webkit-backface-visibility: hidden;
+	color: #818181;
+	text-align: left;
+	margin-top: 45px;
+}
+.footer_top_holder {
+	background-color: #262626;
+	position: relative;
+}
+.footer_top {
+	padding: 65px 0 0 0;
+}
+footer .container_inner {
+	position: relative;
+}
+.row.footer_bottom {
+	display: table-cell;
+	font-size: 12px;
+	line-height: 22px;
+	height: 53px;
+	width: 1%;
+	vertical-align: middle;
+	background-color: #1b1b1b;
+	color: #818181;
+}
+footer p a,footer a {
+	color: #818181;
+}
+footer p a:hover,footer a:hover {
+	color: #818181;
+}
+.footer_top h5 {
+	color: #fff;
+	margin: 0 0 22px;
+	font-size: 15px;
+}
+.footer_top .widget #searchform {
+	background-color: transparent;
+	border: 1px solid #6a6a6a;
+	display: inline-block;
+}
+.footer_top .widget #searchform input[type="text"] {
+	color: #6a6a6a;
+}
+.footer_top .widget #searchform button[type="submit"] {
+	color: #6a6a6a;
+}
+.widget button {
+	width: 37px;
+	height: 37px;
+	line-height: 37px;
+	display: inline-block;
+	margin: 0;
+	padding: 0 4%;
+	outline: 0;
+	border: none;
+	text-decoration: none;
+	color: #a6a6a6;
+	font-family: FontAwesome,sans-serif;
+	cursor: pointer;
+	white-space: nowrap;
+	float: right;
+	-webkit-transition: all .2s ease-in-out;
+	-moz-transition: all .2s ease-in-out;
+	-o-transition: all .2s ease-in-out;
+	-ms-transition: all .2s ease-in-out;
+	background: 0 0;
+}
+.widget #searchform input[type="text"] {
+	display: inline-block;
+	text-decoration: none;
+	border: 0;
+	outline: 0;
+	color: #adadad;
+	background-color: transparent;
+	font-family: inherit;
+	margin: 0;
+	padding: 2px 4%;
+	width: 74%;
+	height: 37px;
+	float: left;
+}

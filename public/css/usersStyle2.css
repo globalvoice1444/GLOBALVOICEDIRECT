@@ -1,0 +1,254 @@
+.jumbotron {
+	padding: 30px;
+	margin-bottom: 30px;
+	font-size: 21px;
+	font-weight: 200;
+	line-height: 2.1428571435;
+	color: inherit;
+	background-color: transparent; 
+	padding:25px !important;
+	text-align: center;
+}
+.center {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 50%;
+}
+.container .card .card-header h5{
+	margin-bottom: 10px;
+	color: #00bcd4
+}
+.row .box{
+	overflow: hidden;
+	background-color: #B2BABB;
+	border:1px solid #ffffff;
+}
+.row .box:hover{
+	background-color: #00bcd4;
+}
+.row .box:hover .tab_images{
+	filter: invert(100%);
+}
+
+.row .box:hover .thumbnail{
+	color: #ffffff !important;
+}
+.marketing_logo_image{
+	width: 150px;
+}
+.nopadding{
+	margin-left: 0px !important;
+	margin-right: 0px !important;
+}
+.logo_section{
+	color: #00bcd4;
+	font-weight: bolder;
+}
+#market_pills li{
+    margin: 6px;
+    text-align: center;
+    align-items: center;
+    padding-top: 45px;
+    height: 180px;
+    width: 31%;
+    justify-content: center;
+}
+#market_pills li a {
+	font-size: 15px;
+    padding: 44px 0px;
+    align-content: center;
+    margin: 0px;
+    width: 100%;
+    height: 178px;
+    border-radius: 0px;
+}
+#market_tab_icon{
+	padding-bottom: 12px;
+	font-size: 55px;
+}
+#marketing_text {
+    padding: 25px 41px;
+}
+#section_market{
+	padding: 0px;
+}
+#tree_img {
+    width: 70%;
+}
+#company_name{
+	margin-left: 30px;
+}
+#marketing_content{
+	border: 1px solid #ccc;
+		background-color: #fff;
+}
+#company_logo{
+	width: 150px;
+    margin-left: 20px;
+}
+#company_image_sec{
+	margin-top: 20px;
+}
+#info_tab{
+	margin: 0px 20px;
+}
+.form-inline{
+	margin-bottom: 20px;
+}
+.form-inline label{
+    justify-content: left !important;
+}
+* {
+  box-sizing: border-box;
+}
+
+#regForm {
+    background-color: #fff;
+     margin: 0px; 
+    font-family: Raleway;
+}
+
+h1 {
+  text-align: center;  
+}
+
+input {
+  padding: 10px;
+  width: 100%;
+  font-size: 17px;
+  font-family: Raleway;
+  border: 1px solid #aaaaaa;
+}
+.input_info {
+    width: 343px;
+    margin-bottom: 9px;
+}
+/* Mark input boxes that get errors during validation: */
+.invalid {
+  background-color: #ffdddd;
+}
+
+.col-md-12.info_textarea {
+    margin: 9px 0px 0px 17px;
+}
+
+/* Hide all steps by default: */
+.tab {
+  display: none;
+}
+#prevBtn{
+	background-color: #c9c9c9;
+	color: #555;
+}
+button {
+  background-color: #4CAF50;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 17px;
+  font-family: Raleway;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+
+
+/* Step marker: Place in the form. */
+.step {
+  height: 15px;
+  width: 15px;
+  margin: 0 2px;
+	background-color: #3f4d67;
+	color: #00bcd4;
+  border: none;  
+  display: inline-block;
+  opacity: 0.5;
+}
+
+.step.active {
+  opacity: 1;
+}
+
+/* Mark the steps that are finished and valid: */
+.step.finish {
+    background-color: #3f4d67;
+	color: #00bcd4;
+s}
+@media only screen and (min-device-width: 768px) and (max-device-width : 1024px){
+	#market_pills li{
+	    height: 135px;
+	    margin: 3px;
+	    width: 31%;
+	}
+	#market_pills li a {
+	    padding: 20px 0px;
+	    margin: 0px;
+	    height: 125px;
+	}
+	#tree_img {
+	    width: 100%;
+	}
+	#market_tab_icon {
+	    font-size: 33px;
+	}
+	#marketing_content {
+	    margin: 30px 0px;
+	}
+	.input_info {
+	    width: 197px;
+	}
+}
+@media only screen and (min-device-width: 320px) and (max-device-width : 667px){
+	#tree_img {
+	    width: 96%;
+	}
+	#market_tab_icon{
+		font-size: 42px;
+	}
+	.input_info {
+	     width: 271px;
+	}
+
+	#market_pills{
+		height: 285px;
+	}
+	#nextBtn {
+	    margin-right: 17px;
+	}
+	#market_pills li{
+	    padding: 11px;
+	    align-content: center;
+	    margin: 0px;
+	    height: 95px;
+	    width: 100%;
+	    border-radius: 0px;
+	}
+	#market_pills li a {
+	    padding: 11px;
+	    align-content: center;
+	    margin: 15px 0px 0px 0px;
+		height: 110px;
+	    width: 100%;
+	    border-radius: 0px;
+	}
+	#marketing_content{
+		padding: 53px 0px;
+	}
+	#marketing_text {
+	    padding: 16px 24px;
+	}
+	.col-md-12.info_textarea {
+	    margin: 9px 17px 0px 17px;
+	}
+
+}
+@media only screen and (max-width: 400px){
+	.input_info {
+	     width: 100%;
+	}
+}
+/* Multi-Step Form */

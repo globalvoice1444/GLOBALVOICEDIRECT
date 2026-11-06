@@ -1,0 +1,74 @@
+/* Global Voice Direct customer panel – shell + components (ported from the customer-panel mockup). 2026-10-31 */
+:root{--gp-bg:#f6f7fb;--gp-panel:#fff;--gp-text:#0f172a;--gp-muted:#64748b;--gp-line:#e5e7eb;--gp-brand:#4f46e5;--gp-brand-d:#4338ca;--gp-brand-50:#eef2ff;--gp-green:#16a34a;--gp-red:#dc2626;--gp-r:10px;--gp-side:232px}
+body.gp{margin:0;background:var(--gp-bg);color:var(--gp-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px}
+body.gp a{color:var(--gp-brand)}
+.gp-shell{display:flex;min-height:100vh}
+.gp-side{width:var(--gp-side);flex-shrink:0;background:#0f172a;color:#cbd5e1;position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 12px 24px;z-index:20}
+.gp-brand{display:flex;align-items:center;gap:10px;padding:0 6px;text-decoration:none!important}
+.gp-logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0}
+.gp-brand-name{font-weight:700;color:#fff;font-size:15.5px;letter-spacing:-.01em;line-height:1.2}
+.gp-brand-sub{font-size:11px;color:#94a3b8}
+.gp-nav{margin-top:18px;display:flex;flex-direction:column;gap:1px}
+.gp-nav-title{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#64748b;padding:14px 10px 6px}
+body.gp .gp-nav a{color:#cbd5e1;padding:8px 10px;border-radius:8px;display:flex;gap:10px;align-items:center;font-size:13.5px;white-space:nowrap;text-decoration:none}
+body.gp .gp-nav a:hover{background:#1e293b;color:#fff}
+body.gp .gp-nav a.on{background:#1e293b;color:#fff}
+.gp-nav a i{width:18px;text-align:center;opacity:.8;font-size:15px}
+.gp-nav .gp-sub a{padding-left:38px;font-size:13px}
+.gp-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.gp-top{height:58px;background:var(--gp-panel);border-bottom:1px solid var(--gp-line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:15;gap:12px}
+.gp-title{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gp-user{display:flex;align-items:center;gap:10px}
+.gp-avatar{width:30px;height:30px;border-radius:50%;background:var(--gp-brand-50);color:var(--gp-brand);display:grid;place-items:center;font-weight:600;text-transform:uppercase}
+.gp-uname{font-size:12.5px;font-weight:500}
+body.gp .gp-signout{font-size:13px;color:var(--gp-text);border:1px solid var(--gp-line);border-radius:8px;padding:6px 10px;text-decoration:none}
+body.gp .gp-signout:hover{background:#f8fafc}
+.gp-burger{display:none;border:1px solid var(--gp-line);background:#fff;border-radius:8px;padding:5px 9px;cursor:pointer}
+.gp-content{padding:24px;width:100%;max-width:1320px}
+.gp-foot{margin-top:auto;padding:14px 24px;color:var(--gp-muted);font-size:12px}
+.gp-crumb{display:none!important}
+@media (max-width:1000px){.gp-side{position:fixed;left:-260px;transition:left .2s}.gp-open .gp-side{left:0}.gp-burger{display:inline-block}.gp-content{padding:16px}}
+/* components inside the content area (override the old theme) */
+.gp-content .card{background:var(--gp-panel);border:1px solid var(--gp-line)!important;border-radius:var(--gp-r)!important;box-shadow:none!important;margin-bottom:16px}
+.gp-content .card .card-header{background:transparent!important;border-bottom:1px solid #f1f5f9!important;padding:14px 16px!important}
+.gp-content .card .card-header:before,.gp-content .card .card-header:after{display:none!important}
+.gp-content .card .card-header h5,.gp-content .card .card-header h4,.gp-content .card .card-header h3{font-size:15px!important;font-weight:600!important;color:var(--gp-text)!important;margin:0}
+.gp-content .card .card-block,.gp-content .card .card-body{padding:16px!important}
+.gp-content h1,.gp-content h2,.gp-content h3,.gp-content h4,.gp-content h5,.gp-content h6{font-family:inherit;color:var(--gp-text)}
+.gp-content .muted,.gp-content .text-muted{color:var(--gp-muted)!important}
+.gp-content .btn{font-family:inherit;border-radius:8px!important;font-weight:500;font-size:13.5px;padding:7px 12px;box-shadow:none!important}
+.gp-content .btn-sm,.gp-content .btn-xs{padding:4px 9px!important;font-size:12.5px!important}
+.gp-content .btn-primary,.gp-content .btn-info,.gp-content .btn-success{background:var(--gp-brand)!important;border-color:var(--gp-brand)!important;color:#fff!important}
+.gp-content .btn-primary:hover,.gp-content .btn-info:hover,.gp-content .btn-success:hover{background:var(--gp-brand-d)!important;border-color:var(--gp-brand-d)!important}
+.gp-content .btn-default,.gp-content .btn-secondary,.gp-content .btn-light,.gp-content .btn-inverse{background:#fff!important;border:1px solid var(--gp-line)!important;color:var(--gp-text)!important}
+.gp-content .btn-default:hover,.gp-content .btn-secondary:hover{background:#f8fafc!important}
+.gp-content .btn-danger{background:#fff!important;border:1px solid #fecaca!important;color:var(--gp-red)!important}
+.gp-content .form-control,.gp-content input[type=text],.gp-content input[type=email],.gp-content input[type=number],.gp-content input[type=tel],.gp-content input[type=password],.gp-content input[type=date],.gp-content select,.gp-content textarea{font-family:inherit;border:1px solid var(--gp-line);border-radius:8px;padding:7px 10px;font-size:14px;color:var(--gp-text);background:#fff}
+.gp-content .form-control:focus,.gp-content input:focus,.gp-content select:focus,.gp-content textarea:focus{border-color:var(--gp-brand)!important;outline:2px solid var(--gp-brand-50);box-shadow:none!important}
+.gp-content label{font-size:12.5px;color:var(--gp-muted);font-weight:500}
+.gp-content .table{width:100%;border-collapse:collapse;background:transparent}
+.gp-content .table th,.gp-content .table thead th{text-align:left;font-weight:500;color:var(--gp-muted);font-size:12px;padding:9px 10px!important;border-top:0!important;border-bottom:1px solid var(--gp-line)!important;white-space:nowrap}
+.gp-content .table td{padding:10px!important;border-top:0!important;border-bottom:1px solid #f1f5f9!important;vertical-align:middle}
+.gp-content .table-hover tbody tr:hover{background:#f8fafc}
+.gp-content table.table-responsive{display:table}
+.gp-content .table-responsive{border:0}
+.gp-content .alert{border-radius:8px;font-size:13px}
+.gp-content .alert-success{background:#f0fdf4;border-color:#dcfce7;color:#166534}
+.gp-content .alert-danger{background:#fef2f2;border-color:#fee2e2;color:var(--gp-red)}
+.gp-content .alert-info{background:var(--gp-brand-50);border-color:#e0e7ff;color:#3730a3}
+.gp-content .badge,.gp-content .label{border-radius:99px;font-weight:500;font-size:11.5px;padding:2px 8px}
+.gp-content .st{border-radius:99px!important;background:#f1f5f9!important;color:#475569!important}
+.gp-content .st.on{background:#dcfce7!important;color:#166534!important}
+.gp-content .page-header,.gp-content .page-block{display:none}
+.gp-content .nav-tabs{border-bottom:1px solid var(--gp-line)}
+.gp-content .nav-tabs .nav-link{border:0;color:var(--gp-muted);border-bottom:2px solid transparent}
+.gp-content .nav-tabs .nav-link.active{color:var(--gp-brand);border-bottom-color:var(--gp-brand);background:transparent}
+.gp-content .cb-card h6{background:var(--gp-brand)!important}
+.gp-content .gvd-vo .ro{background:#fffbeb;border-color:#fef3c7;color:#92400e;border-radius:8px}
+.gp-content .hm-tile{border-radius:var(--gp-r)!important}
+.gp-content .hm-tile b{color:var(--gp-brand)!important}
+.gp-content .card .card-header h5:after,.gp-content .card .card-header h4:after,.gp-content .card .card-header h3:after{display:none!important}
+.gp-content .dataTables_wrapper{width:100%}.gp-content table.dataTable{width:100%!important}.gp-content table.dataTable thead th{padding-right:24px!important}
+.gp-content .row>.tab-content{flex:1 1 100%;max-width:100%;width:100%}.gp-content .contacts-table{width:100%}
+/* 2026-11-06 sidebar: full-height dark column, pinned to viewport, scrolls inside */
+@media (min-width:1001px){.gp-shell{background:linear-gradient(90deg,#0f172a var(--gp-side),var(--gp-bg) var(--gp-side))}.gp-side{position:sticky;top:0;align-self:flex-start;height:100vh;max-height:100vh;overflow-y:auto}.gp-main{min-height:100vh}}

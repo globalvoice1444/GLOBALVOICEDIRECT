@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head>
+  
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>test</title>
+
+  
+</head><body>
+<br>
+
+
+
+
+<?php defined('SIGNUP') or die('Restricted access'); 
+$payment_method=array (
+  0 => 'MasterCard',
+  1 => 'VISA',
+  2 => 'American Express',
+  3 => 'Discover',
+  4 => 'Maestro',
+);
+$config=array (
+  'server_url' => 'mybilling.globalvoicedirect.com',
+  'captcha' => 
+  array (
+    'public_key' => 'REDACTED',
+    'private_key' => 'REDACTED',
+  ),
+  'email_confirm' => true,
+  'references' => 
+  array (
+    'account_sci' => 'https://mybilling.telinta.com:8445',
+    'customer_sci' => 'https://mybilling.telinta.com:8444',
+  ),
+  'submit_note' => '',
+  'login' => 'REDACTED',
+  'password' => 'REDACTED',
+  'service' => 'Admin',
+  'env' => '119',
+  'valid_email_domains' => '',
+);
+$packages = array(
+array (
+  'virtoffice' => true,
+  'virtoffice_desc' => '3',
+  'subscriber' => 
+  array (
+    'id_source' => 'DID',
+    'billing_model' => 1,
+    'i_account_balance_control_type' => 3,
+    'opening_balance_a' => 0,
+    'acl_a' => 155,
+    'batch_name' => '268933-vo-did',
+    'ecommerce_enabled' => 'N',
+    'follow_me_enabled' => 'N',
+    'currency' => 'USD',
+    'i_parent' => 268933,
+    'blocked_a' => 'N',
+    'customer_class' => 3786,
+    'i_balance_control_type' => 1,
+    'opening_balance_c' => 0,
+    'acl_c' => 136,
+    'blocked_c' => 'N',
+    'i_billing_period' => 5,
+  ),
+  'did_split_on' => true,
+  'config' => 
+  array (
+    'owner_batch' => '786',
+    'offset' => '0',
+    'limit' => '50',
+  ),
+  'did_mask' => 
+  array (
+    'patern' => 
+    array (
+      'direct' => '',
+      'back' => '',
+    ),
+    'replace' => 
+    array (
+      'direct' => '',
+      'back' => '',
+    ),
+  ),
+  'template_account' => 
+  array (
+    'currency' => 'USD',
+    'id' => '18775050343',
+  ),
+  'description' => 
+  array (
+    'en' => 'SMB standard phone plan Virtual Office Plan',
+  ),
+  'amount' => '24.95',
+  'i_product' => '23822',
+  'i_subscription' => '3595',
+  'cupon_on' => true,
+)
+);
+?>		
+<br>
+</body></html>

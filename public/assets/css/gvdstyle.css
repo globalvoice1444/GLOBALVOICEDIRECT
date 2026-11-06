@@ -1,0 +1,569 @@
+/*=========================
+  Default Theme
+  -------------------------
+  Fonts:Raleway & Open Sans
+  -------------------------
+  Colors:
+  Rio Grande:      #b0cb02
+  Chathams Blue:   #134576
+  Alabaster:       #fafafa
+  White:           #ffffff
+  Black:           #000000
+=========================*/
+
+/*========================
+        Html, Body
+========================*/
+    .sn-dv{
+      background: #fafafa;
+    }
+    .log-div-sn
+    {
+      margin-bottom: 50px;
+    }
+    .page-Btn-p{
+          width: 65px;
+    margin-left: -36px;
+    }
+    .page-Btn-n
+    {
+      width: 50px;
+    }
+    .box-h{
+  line-height: 24px !important;
+}
+    .member-top-bot{
+  margin-top: 100px;
+  margin-bottom: 100px;
+}
+.ab-h{
+  font-family: "Raleway";
+  color: #134576;
+  font-weight: 700;
+  font-size: 34px;
+  margin-top: -26px;
+  margin-bottom: 20px;
+}
+.member-p
+{
+  background: #b0cb02; 
+  color: #ffffff;
+  padding-top: 15px;
+  margin-top: 30px;
+  border-radius: 6px;
+}
+.member-p p{
+  font-family: "open sans";
+  font-size: 16px;
+  text-align: left;
+}
+    .sn-hd{
+      text-align: center;
+      font-size: 30px;
+      font-weight: 600;
+      color: white;
+      background: #241F6A;
+      height: auto;
+    }
+    .fm-top
+    {
+      margin-top: 30px;
+    }
+    .bt-sn
+    {
+      background: #B0CB02;
+      width: 280px;
+      max-width: 280px;
+      color: white;
+    }
+    .sn-lb
+    {
+       margin-top: 30px;
+    }
+    .sn-ps
+    {
+      margin-top: 30px;
+      margin-bottom: 30px;
+      padding-bottom: 30px;
+    }
+    .sn-fm
+    {
+      border-style: none;
+      border-radius: 6px;
+    }
+    a.sn-a
+    {
+      color: black;
+
+    }
+    a.sn-a:hover{
+      color: blue;
+
+    }
+    .sn-header-r
+    {
+      border-radius: 6px;
+      padding-left: -15px;
+      padding-right: -15px;
+    }
+    .sn-item
+    {
+      margin-top: 100px;
+      margin-bottom: 100px;
+    }
+      .sn-hd-f{
+      text-align: center;
+      font-size: 23px;
+      font-weight: 600;
+      color: white;
+      background: #134567;
+      height: 60px;
+      padding-top: 15px;
+      border-radius: 6px 6px 0 0;
+      font-family: "Raleway",SemiBold;
+      text-transform: uppercase;
+    }
+    .bt-sn-f
+    {
+      background: #B0CB02;
+      color: white;
+      font-size: 18px;
+      border-radius: 6px;
+      border-style: none;
+      
+    }
+
+    .mar-div
+    {
+      margin-top: 50px;
+
+    }
+    .pp
+    {
+      padding-bottom: 25px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .fg-bn-f
+    {
+        background: #134576;
+        color: white;
+        font-size: 18px;
+        border-style: none;
+        border-radius: 6px;
+    }
+    .bt-sn-af
+    {
+      background: #B0CB02;
+      color: white;
+      font-size: 18px;
+      border-radius: 6px;
+      border-style: none;
+      height: 64px;
+    }
+    .sn-hd-fo{
+      text-align: center;
+      font-size: 23px;
+      font-weight: 600;
+      color: white;
+      background: #241F6A;
+      height: auto;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    .pp-para
+    {
+      padding-bottom: 15px;
+      font-size: 14px;
+      font-weight: 500;
+      background: #b0cb02;
+        padding-top: 15px;
+      border-radius: 6px;
+      color: white;
+      font-family: "open sans";
+    }
+    .heding-style-h
+    {
+      padding-top: 20px;
+      font-size: 24px;
+      color: #134576;
+      font-weight: 700;
+      font-family: "Raleway",bold;
+    }
+    .para-style-p
+    {
+      font-size: 16px;
+      font-family: "open sans";
+      font-weight: 350;
+      color: #666666;
+        
+    }
+    .form-img{
+      margin-top: 17px;
+      margin-bottom: 15px;
+    }
+
+    img.membership-card {
+    width: 100%;
+    }
+
+    .list-style-p
+    {
+      font-size: 16px;
+      font-family: "open sans";
+      font-weight: lighter;
+      list-style-type: none;
+      color: #666666;
+        
+    }
+    .i-bg-p
+    {
+      color: #b0cb02;
+    }
+    .p-ab2
+    { 
+      padding-top: 20px;
+      
+    }
+    .list-style-ab
+    {
+      list-style-type: none;
+    }
+  
+    .aboutus-margin
+    {
+      margin-top: 100px;
+      margin-bottom: 100px;
+    }
+    .item-center-ab
+    {
+      padding-right: 25%;
+      padding-left: 25%;
+    }
+    .img-div
+    {
+      margin-top: 50px;
+      margin-bottom: 50px;
+      
+    }
+    .img-center
+    {
+      padding-left: 25px;
+      padding-right: 25px;
+    }
+    .div-left-border
+    {
+      border-left: 5px solid #b0cb02;
+      margin-bottom: 100px;
+    }
+    .font-about
+    {
+      text-align: center;
+      color: #666666;
+      font-weight: 500;
+      font-size: 18px;
+    }
+    .bg-ab
+    {
+          background: white;
+      box-shadow: 0 0 10px 0 rgba(0,0,0,0.1);
+      border-radius: 6px;
+
+    }
+    .p-cs-ab{
+        text-align: center;;
+        color: #134576;
+        font-weight: 400;
+        font-size: 16px;
+          background: #fafafa;
+    }
+    img.img-fluid-set.offset-md-4 {
+    width: 30%;
+    }
+    
+    @media(max-width: 320px){
+        img.img-fluid-set.offset-md-4 {
+        width: 100%;
+     }
+    }
+    .bg-ab{
+      padding-top: 7px;
+      padding-bottom: 12px;
+    }
+    .abt-mrg{
+       padding-top: 7px;
+       padding-bottom: 17px;
+    }
+    .horizontal-heading-ab{
+    font-family: "Raleway", SemiBold;
+      color: #134577;
+      font-weight: 700;
+      font-size: 26px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .ab-fo{
+      margin-left: 15px;
+    }
+    .p-fo-co
+    {
+      font-family: "open sans", sans-serif;
+      color: #134576;
+      font-weight: 600;
+      font-size: 16px;
+      padding-bottom: 20px;
+      padding-left: 15px;
+      padding-right: 15px;
+      padding-top: 23px;
+    }
+    @media(max-width: 780px){
+    .p-fo-co {
+    margin-left: 15px;
+    margin-right: 15px;
+     }
+    }
+    .fa-ab{
+      color: #B0CB02;
+    }
+    
+    .logo-border
+    {
+      border: 0px;
+      width: 214px;
+
+    }
+    .about-div
+    {
+      margin-top: 80px;
+      margin-bottom: 31px;
+    }
+    .aboutus-text
+    {
+      margin-top: 30px;
+      padding-top: 75px;
+      padding-bottom: 75px;
+
+    }
+    .aboutus-span
+    {
+      margin-bottom: 30px;
+    }
+    span.aboutus-span img {
+    width: 32%;
+    }
+    .aboutus-img
+    {
+      margin-top: 30px;
+      width: 100%;
+    }
+    .p-cs{
+          text-align: center;;
+          color: #134576;
+          font-weight: 500;
+          margin-bottom: 20px;
+          font-size: 16px;
+          font-family: "Raleway", sans-serif;
+          background: #fafafa;
+          border-left: 5px solid #b0cb02;
+          padding: 20px 30px;
+    }
+    .horizontal-heading{
+    color: #134576;
+    font-weight: 600;
+    font-size: 30px;
+    margin-bottom: 20px;
+    font-family: "Raleway";
+}
+    .addon-saletag-home
+    {
+      position: absolute;
+      padding-top: 30px;
+      padding-right: 14px; 
+      z-index: 1;
+      right: 0;
+
+    }
+    .addon-saletag-home1
+    {
+      position: absolute;
+      padding-top: 30px;
+      padding-right: 9px; 
+      z-index: 1;
+      right: 0;
+
+    }
+    .addon-saletag
+    {
+      position: absolute;
+      padding-top: 0px;
+      padding-right: 0px; 
+      z-index: 1;
+      right: 0;
+
+    }
+    .addon-tag
+    {
+      position: relative;;
+    }
+    .abt-mrg{
+      margin-left: 20px;
+
+    }
+    .ab-box-c
+    {
+      margin-left: 98px;
+    }
+     @media(max-width:768px)
+    {
+  .ab-box-c {
+    margin-left: 10px;
+    margin-right: 10px;
+    }
+  }
+    .sn-dv{
+      background: #fafafa;
+    }
+    .log-div-sn
+    {
+      margin-bottom: 50px;
+    }
+    .log-div-sn img{
+    	width:75%;
+    }
+    .sn-hd{
+      text-align: center;
+      font-size: 30px;
+      font-weight: 600;
+      color: white;
+      background: #241F6A;
+      height: auto;
+    }
+    .fm-top
+    {
+      margin-top: 30px;
+    }
+    .bt-sn
+    {
+      background: #B0CB02;
+      width: 280px;
+      max-width: 280px;
+      color: white;
+    }
+    .sn-lb
+    {
+       margin-top: 30px;
+    }
+    .sn-ps
+    {
+      margin-top: 30px;
+      margin-bottom: 30px;
+      padding-bottom: 30px;
+    }
+    .sn-fm
+    {
+      border-style: none;
+      border-radius: 6px;
+    }
+    .office-headings
+    {
+      font-size: 30px; color: #134577; font-weight: 700; font-family: "Raleway";
+    }
+    .office-para
+    {
+      font-size: 16px; color: #666666; font-family: 'open sans',regular; font-weight: 500;
+    }
+    .office-sr
+    {
+      font-size: 20px; color: #134576;
+    }
+    .office-h
+    {
+      font-size: 20px; color: #134576; font-weight: 700; font-family: "Raleway";
+    }
+    .office-h4
+    {
+      font-size: 20; font-family: 'open sans',regular;
+    }
+    .pad{
+      padding-top: 15px;
+    }
+    .mo-login{
+      background: #ccc;
+      padding-top: 15px;
+    }
+    .p-fo-h
+    {
+      font-family: "open sans", sans-serif;
+        color: #666666;
+        font-weight: 500;
+        font-size: 16px;
+      
+    }
+     .p-fo-box
+    {
+      font-family: "open sans", sans-serif;
+      color: #666666;
+      font-weight: 500;
+      font-size: 16px;
+    }
+    @media (min-width: 768px){
+    .abt-mrg {
+      margin-left: 0px;
+      }
+    }
+    @media (max-width: 767px){
+    .abt-mrg {
+      margin-left: 0px;
+      margin-top: 15px;
+      }
+    }
+    @media (min-width: 992px){
+      .abt-mrg {
+      margin-left: 15px;
+
+      }
+    }
+    .text-container.col-12.col-sm-12.col-md-5.col-lg-5.bg-ab
+    {
+      height: auto;
+
+    }
+
+    @media (min-width: 768px){
+.offset-md-3 {
+    margin-left: 25%;
+  }
+}
+@media (max-width: 474px){
+.sn-hd-f {
+    font-size: 13px;
+}
+   @media (max-width: 274px){
+.sn-hd-f {
+    font-size: 14px;
+}
+
+@media (min-width: 769px){
+.offset-md-3 {
+    margin-left: 25%;
+  }
+}
+ @media (max-width: 766px){
+  .abt-mrg {
+    margin-left: 0px;
+    margin-top: 15px;
+  }
+}
+ @media (max-width: 266px){
+  .abt-mrg {
+    margin-left: 0px;
+    margin-top: 15px;
+  }
+}
+   @media (min-width: 768px){
+.about-heading-b {
+    margin-left: 10%;
+  }
+}
+
+
