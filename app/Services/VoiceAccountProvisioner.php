@@ -35,15 +35,27 @@ class VoiceAccountProvisioner
         return self::enabled() && AiConnect::visibleTo($uid);
     }
 
+    /** @return array<string, array<string, mixed>> */
     public static function providers(): array
     {
         $providers = config('ai_connect.voice_providers');
-        return is_array($providers) ? $providers : [];
+        if (!is_array($providers)) return [];
+        $out = [];
+        foreach ($providers as $id => $row) {
+            if (!is_array($row) || !isset($row['label'])) continue;
+            $out[(string) $id] = $row;
+        }
+        return $out;
+    }
+
+    public static function provider(string $id): ?array
+    {
+        return self::providers()[$id] ?? null;
     }
 
     public static function providerChoiceError(): string
     {
-        $names = array_values(self::providers());
+        $names = array_map(fn ($row) => (string) $row['label'], self::providers());
         if (count($names) < 2) return 'Choose a provider.';
         $last = array_pop($names);
         return 'Choose ' . implode(', ', $names) . ', or ' . $last . '.';
@@ -52,10 +64,22 @@ class VoiceAccountProvisioner
     /** Null when the key may be saved. A blank key means leave the stored key unchanged. */
     public static function providerKeyError(string $provider, string $key, string $stored = ''): ?string
     {
-        if ($provider !== 'claude') return null;
-        $candidate = $key !== '' ? $key : $stored;
-        if (str_starts_with($candidate, 'sk-ant-')) return null;
-        return 'Enter an Anthropic API key from console.anthropic.com. It starts with sk-ant-.';
+        $def = self::provider($provider);
+        if (!$def) return self::providerChoiceError();
+        $prefix = (string) ($def['key_prefix'] ?? '');
+        $pattern = (string) ($def['key_pattern'] ?? '');
+        if ($prefix === '' && $pattern === '') return null;
+        $hint = (string) ($def['key_hint'] ?? 'That API key does not match the expected format.');
+        if ($key === '') {
+            if ($stored !== '') return null;
+            return 'Enter your ' . $def['label'] . ' API key. ' . $hint;
+        }
+        if ($provider === 'openai' && str_starts_with($key, 'sk-ant-')) {
+            return 'An OpenAI key starts with sk- and is not an Anthropic key.';
+        }
+        if ($pattern !== '' && !preg_match($pattern, $key)) return $hint;
+        if ($prefix !== '' && !str_starts_with($key, $prefix)) return $hint;
+        return null;
     }
 
     public static function generateSipPassword(int $length = 24): string
@@ -181,8 +205,13 @@ class VoiceAccountProvisioner
         }
     }
 
-    /** Existing SIP password for one owned extension. Null unless Account/get_account_info confirms i_customer and id. */
-    public static function extensionPassword(int $userId, int $iAccount, string $username): ?string
+    /**
+     * SIP login, domain, and password from Account/get_account_info.
+     * Returned only when i_customer and the account id match. Never log this array.
+     *
+     * @return array{username: string, domain: string, password: string}|null
+     */
+    public static function extensionCredentials(int $userId, int $iAccount, string $username): ?array
     {
         try {
             $k = BillingSession::get();
@@ -198,7 +227,12 @@ class VoiceAccountProvisioner
             if ((int) ($info['i_customer'] ?? 0) !== (int) $k['i_customer']) return null;
             if ((string) ($info['id'] ?? '') !== $username) return null;
             $password = (string) ($info['h323_password'] ?? '');
-            return $password === '' ? null : $password;
+            if ($password === '') return null;
+            return [
+                'username' => $username,
+                'domain' => trim((string) ($info['sip_domain'] ?? ($info['domain'] ?? ''))),
+                'password' => $password,
+            ];
         } catch (\Throwable $e) {
             Log::warning('voice bot extension password unavailable', ['user_id' => $userId, 'i_account' => $iAccount, 'error' => $e::class]);
             return null;

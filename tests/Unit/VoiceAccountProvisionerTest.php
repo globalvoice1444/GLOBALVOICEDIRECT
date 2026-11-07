@@ -63,14 +63,32 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertStringNotContainsString('foreign-secret-pw', json_encode($rows));
     }
 
-    public function test_claude_keys_must_start_with_the_anthropic_prefix(): void
+    public function test_provider_registry_marks_calls_unsupported_and_checks_documented_key_formats(): void
     {
+        $registry = VoiceAccountProvisioner::providers();
+        foreach (['grok', 'openai', 'gemini', 'claude', 'hermes', 'elevenlabs', 'deepgram', 'ultravox', 'hume'] as $id) {
+            $this->assertArrayHasKey($id, $registry);
+            $this->assertNotSame('', $registry[$id]['label']);
+            $this->assertArrayHasKey('setup_note', $registry[$id]);
+            $this->assertFalse((bool) $registry[$id]['gateway_supported']);
+        }
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('grok', 'xai-example'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('grok', 'sk-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('openai', 'sk-example'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('openai', 'sk-ant-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('gemini', 'AIzaExampleKey'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('gemini', 'xai-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('grok', '', 'xai-example'));
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('claude', 'sk-ant-example'));
-        $this->assertNull(VoiceAccountProvisioner::providerKeyError('claude', '', 'sk-ant-example'));
-        $this->assertNull(VoiceAccountProvisioner::providerKeyError('grok', 'not-an-anthropic-key'));
-        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('claude', 'not-an-anthropic-key'));
-        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('claude', ''));
-        $this->assertStringContainsString('Claude', VoiceAccountProvisioner::providerChoiceError());
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('claude', 'sk-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('elevenlabs', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('deepgram', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('hume', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('hermes', 'any-customer-key'));
+        $validUltravox = 'abcdEF12.' . str_repeat('a', 32);
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('ultravox', $validUltravox));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('ultravox', 'not-an-ultravox-key'));
+        $this->assertStringContainsString('Gemini', VoiceAccountProvisioner::providerChoiceError());
     }
 
     public function test_menu_visibility_follows_the_feature_flag_and_ai_connect(): void

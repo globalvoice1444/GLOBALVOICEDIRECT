@@ -131,6 +131,7 @@ class AdminVoiceBotTest extends TestCase
         $response->assertSee('Grok', false);
         $response->assertSee('OpenAI', false);
         $response->assertSee('Claude', false);
+        $response->assertSee('calls not yet supported', false);
         $response->assertSee('Cam Claude', false);
         $response->assertSee('>Yes<', false);
         $response->assertSee('>No<', false);

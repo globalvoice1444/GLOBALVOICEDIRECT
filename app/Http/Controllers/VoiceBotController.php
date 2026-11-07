@@ -58,16 +58,15 @@ class VoiceBotController extends Controller
         if ($lookup['status'] === 'error') return $this->j(['ok' => false, 'error' => $lookup['message']], 422);
         $extensions = $lookup['extensions'];
         if ($extensions === []) return $this->j(['ok' => false, 'error' => $lookup['message'] ?: self::NO_EXTENSION], 422);
-        $byUser = [];
-        foreach ($extensions as $ex) $byUser[$ex['username']] = $ex;
-        $picked = trim((string) $r->input('sip_username', $r->input('username', '')));
-        if ($picked === '' && count($byUser) === 1) $picked = (string) array_key_first($byUser);
-        if (!isset($byUser[$picked])) return $this->j(['ok' => false, 'error' => 'That extension is not on your account.'], 422);
-        $password = VoiceAccountProvisioner::extensionPassword($uid, (int) $byUser[$picked]['i_account'], $picked);
-        if ($password === null || !VoiceAccountProvisioner::passwordIsValid($password)) {
+        $match = $this->ownedExtension($extensions, $r);
+        if ($match === null) return $this->j(['ok' => false, 'error' => 'That extension is not on your account.'], 422);
+        $creds = VoiceAccountProvisioner::extensionCredentials($uid, (int) $match['i_account'], $match['username']);
+        if ($creds === null || !VoiceAccountProvisioner::passwordIsValid($creds['password'])) {
             return $this->j(['ok' => false, 'error' => 'We could not use the SIP password already on that extension.'], 422);
         }
-        $username = $picked;
+        $password = $creds['password'];
+        $username = $creds['username'];
+        $domain = $creds['domain'];
         $provider = (string) $r->input('provider', '');
         $caller = preg_replace('/\D/', '', (string) $r->input('caller_id', ''));
         $key = trim((string) $r->input('api_key', ''));
@@ -88,6 +87,7 @@ class VoiceBotController extends Controller
             return $this->j(['ok' => false, 'error' => $message], 422);
         }
         $account->sip_password = $password;
+        $account->sip_domain = $domain !== '' ? $domain : null;
         $account->username = $username;
         $account->caller_id = $caller === '' ? null : $caller;
         $account->provider = $provider;
@@ -103,6 +103,26 @@ class VoiceBotController extends Controller
 
         ProvisionVoiceAccount::enqueue($uid, ProvisionVoiceAccount::PUT);
         return $this->afterJob($uid, 'Could not provision the voice account.');
+    }
+
+    /** The extension id or SIP login must be one returned by the fresh PortaSwitch list. */
+    private function ownedExtension(array $extensions, Request $r): ?array
+    {
+        $byUser = [];
+        $byId = [];
+        foreach ($extensions as $ex) {
+            $byUser[$ex['username']] = $ex;
+            if ((int) ($ex['i_account'] ?? 0) > 0) $byId[(int) $ex['i_account']] = $ex;
+        }
+        $extId = (int) $r->input('extension');
+        $picked = trim((string) $r->input('sip_username', $r->input('username', '')));
+        if ($extId > 0) {
+            $match = $byId[$extId] ?? null;
+            if ($match && $picked !== '' && $picked !== $match['username']) return null;
+            return $match;
+        }
+        if ($picked !== '') return $byUser[$picked] ?? null;
+        return count($extensions) === 1 ? $extensions[0] : null;
     }
 
     public function removeKey(Request $r)

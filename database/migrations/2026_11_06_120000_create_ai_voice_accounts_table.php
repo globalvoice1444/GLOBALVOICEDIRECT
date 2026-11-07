@@ -13,6 +13,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('user_id')->unique();
             $t->string('account_id', 64)->unique();
             $t->string('username', 64);
+            $t->string('sip_domain', 190)->nullable();
             $t->text('sip_password');
             $t->boolean('enabled')->default(true);
             $t->string('caller_id', 20)->nullable();

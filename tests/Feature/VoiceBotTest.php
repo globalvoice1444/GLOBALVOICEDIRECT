@@ -124,7 +124,10 @@ class VoiceBotTest extends TestCase
         $response->assertSee('https://app.globalvoicedirect.com/mcp', false);
         $response->assertSee('Voice bot', false);
         $response->assertSee('<select id="vbUser"', false);
-        $response->assertSee('value="0205500101" selected', false);
+        $response->assertSee('value="9" selected', false);
+        $response->assertSee('0205500101', false);
+        $response->assertSee('calls not yet supported', false);
+        $response->assertDontSee('sip.example.test', false);
         $response->assertSee('Ext 101', false);
         $response->assertDontSee('live-sip-pass1', false);
         $response->assertDontSee('foreign-secret-pw', false);
@@ -152,15 +155,18 @@ class VoiceBotTest extends TestCase
             'caller_id' => '(561) 555-0100',
             'provider' => 'grok',
             'enabled' => true,
-            'api_key' => 'provider-key-one',
+            'api_key' => 'xai-example',
             'account_id' => '999',
         ]);
         $create->assertOk()->assertJson(['ok' => true, 'status' => 'active']);
-        $create->assertDontSee('provider-key-one', false);
+        $create->assertDontSee('xai-example', false);
 
         $row = AiVoiceAccount::where('user_id', 42)->first();
         $this->assertSame('42', $row->account_id);
         $this->assertSame('0205500101', $row->username);
+        $this->assertSame('sip.example.test', $row->sip_domain);
+        $create->assertDontSee('sip.example.test', false);
+        $create->assertDontSee('live-sip-pass1', false);
         $this->assertSame('5615550100', $row->caller_id);
         $this->assertSame('live-sip-pass1', $row->sip_password);
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid($row->sip_password));
@@ -168,7 +174,7 @@ class VoiceBotTest extends TestCase
         $this->assertSame('Created', $row->last_result);
         $password = $row->sip_password;
         $stored = DB::table('ai_voice_accounts')->where('user_id', 42)->first();
-        $this->assertStringNotContainsString('provider-key-one', $stored->api_key);
+        $this->assertStringNotContainsString('xai-example', $stored->api_key);
         $this->assertStringNotContainsString($password, $stored->sip_password);
         $this->assertStringNotContainsString($password, serialize(new ProvisionVoiceAccount(42, ProvisionVoiceAccount::PUT)));
 
@@ -182,7 +188,7 @@ class VoiceBotTest extends TestCase
         $again->assertOk()->assertJson(['ok' => true, 'status' => 'active']);
         $row->refresh();
         $this->assertSame($password, $row->sip_password);
-        $this->assertSame('provider-key-one', $row->api_key);
+        $this->assertSame('xai-example', $row->api_key);
         $this->assertFalse($row->api_key_dirty);
         $this->assertTrue($row->api_key_on_gateway);
         $this->assertSame('Updated', $row->last_result);
@@ -221,7 +227,7 @@ class VoiceBotTest extends TestCase
         $this->assertTrue($first['enabled']);
         $this->assertSame('5615550100', $first['caller_id']);
         $this->assertSame('grok', $first['provider']);
-        $this->assertSame('provider-key-one', $first['api_key']);
+        $this->assertSame('xai-example', $first['api_key']);
         $second = $voice[1]->data();
         $this->assertSame('openai', $second['provider']);
         $this->assertFalse($second['enabled']);
@@ -232,29 +238,29 @@ class VoiceBotTest extends TestCase
         $this->assertArrayHasKey('api_key', $voice[3]->data());
         $this->assertNull($voice[3]->data()['api_key']);
         $this->assertSame('DELETE', $voice[4]->method());
-        $this->assertSecretsAbsent(['provider-key-one', 'provider-key-two', $password, 'live-sip-pass1', 'gateway-token-test']);
+        $this->assertSecretsAbsent(['xai-example', 'provider-key-two', $password, 'live-sip-pass1', 'gateway-token-test']);
     }
 
     public function test_gateway_conflicts_and_validation_do_not_echo_secrets(): void
     {
-        $this->queueGateway(409, ['error' => 'provider-key-one sip_password leaked']);
-        $this->queueGateway(422, ['error' => 'provider-key-one invalid']);
+        $this->queueGateway(409, ['error' => 'xai-example sip_password leaked']);
+        $this->queueGateway(422, ['error' => 'xai-example invalid']);
         $this->bill();
 
         $conflict = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', $this->payload());
         $conflict->assertStatus(422)->assertJson(['ok' => false, 'error' => 'That username is already in use.']);
-        $conflict->assertDontSee('provider-key-one', false);
+        $conflict->assertDontSee('xai-example', false);
 
         $invalid = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', $this->payload());
         $invalid->assertStatus(422)->assertJson(['ok' => false, 'error' => 'The voice gateway rejected those account details.']);
-        $invalid->assertDontSee('provider-key-one', false);
+        $invalid->assertDontSee('xai-example', false);
 
         $row = AiVoiceAccount::where('user_id', 42)->first();
         $this->assertSame('error', $row->status);
         $this->assertSame('The voice gateway rejected those account details.', $row->last_result);
-        $this->assertStringNotContainsString('provider-key-one', (string) $row->last_error);
-        $this->assertStringNotContainsString('provider-key-one', (string) $row->last_result);
-        $this->assertSecretsAbsent(['provider-key-one', $row->sip_password]);
+        $this->assertStringNotContainsString('xai-example', (string) $row->last_error);
+        $this->assertStringNotContainsString('xai-example', (string) $row->last_result);
+        $this->assertSecretsAbsent(['xai-example', $row->sip_password]);
     }
 
     public function test_unreachable_gateway_is_logged_without_the_exception_message(): void
@@ -266,7 +272,7 @@ class VoiceBotTest extends TestCase
         $joined = implode("\n", $this->logs);
         $this->assertStringContainsString('voice bot gateway unreachable', $joined);
         $this->assertStringContainsString('ConnectionException', $joined);
-        $this->assertStringNotContainsString('provider-key-one', $joined);
+        $this->assertStringNotContainsString('xai-example', $joined);
         $this->assertStringNotContainsString('connection failed', $joined);
     }
 
@@ -308,7 +314,7 @@ class VoiceBotTest extends TestCase
             'username' => 'ab',
             'caller_id' => '5615550100',
             'provider' => 'other',
-        ])->assertStatus(422)->assertJson(['error' => 'Choose Grok, OpenAI, Hermes, or Claude.']);
+        ])->assertStatus(422)->assertJson(['error' => VoiceAccountProvisioner::providerChoiceError()]);
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'sip_username' => '0205500101',
             'caller_id' => '123',
@@ -422,7 +428,7 @@ class VoiceBotTest extends TestCase
             'api_key' => $bad,
             'caller_id' => '',
         ]);
-        $rejected->assertStatus(422)->assertJson(['error' => 'Enter an Anthropic API key from console.anthropic.com. It starts with sk-ant-.']);
+        $rejected->assertStatus(422)->assertJson(['error' => 'An Anthropic key starts with sk-ant-.']);
         $rejected->assertDontSee($bad, false);
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'voice.example.test'));
 
@@ -447,7 +453,8 @@ class VoiceBotTest extends TestCase
                 && $data['caller_id'] === null;
         });
         $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
-        $page->assertSee('>Claude<', false);
+        $page->assertSee('Claude — calls not yet supported', false);
+        $page->assertSee('https://aistudio.google.com/apikey', false);
         $page->assertSee('https://console.anthropic.com', false);
         $page->assertDontSee($good, false);
         $this->assertSecretsAbsent([$bad, $good, 'live-sip-pass1']);
@@ -524,6 +531,7 @@ class VoiceBotTest extends TestCase
                         return Http::response(['account_info' => [
                             'i_account' => $ia, 'i_customer' => 55, 'id' => $e['account_id'] ?? '',
                             'h323_password' => $this->sipPasswords[$ia] ?? $this->sipPassword,
+                            'sip_domain' => 'sip.example.test',
                         ]]);
                     }
                     return Http::response(['account_info' => ['i_account' => $ia, 'i_customer' => 99, 'id' => 'foreign-login', 'h323_password' => 'foreign-secret-pw']]);
@@ -531,7 +539,7 @@ class VoiceBotTest extends TestCase
                 return Http::response(['customer_info' => ['i_customer' => 55]]);
             }
             if (str_contains($url, 'voice.example.test')) {
-                if ($this->gatewayThrows) throw new ConnectionException('connection failed for provider-key-one');
+                if ($this->gatewayThrows) throw new ConnectionException('connection failed for xai-example');
                 return array_shift($this->gatewayQueue) ?: Http::response(['ok' => true], 201);
             }
             return Http::response(['faultcode' => 'unexpected'], 500);
@@ -546,7 +554,7 @@ class VoiceBotTest extends TestCase
             'caller_id' => '5615550100',
             'provider' => 'grok',
             'enabled' => true,
-            'api_key' => 'provider-key-one',
+            'api_key' => 'xai-example',
         ];
     }
 

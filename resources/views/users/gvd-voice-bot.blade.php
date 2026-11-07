@@ -36,7 +36,7 @@
   <select id="vbUser" {{ $demo ? 'disabled' : '' }}>
    @if(count($extensions) !== 1)<option value="">Choose an extension</option>@endif
    @foreach($extensions as $ex)
-    <option value="{{ $ex['username'] }}" {{ ($account['username'] === $ex['username'] || count($extensions) === 1) ? 'selected' : '' }}>{{ $ex['label'] }}</option>
+    <option value="{{ $ex['i_account'] }}" {{ ($account['username'] === $ex['username'] || count($extensions) === 1) ? 'selected' : '' }}>{{ $ex['label'] }}</option>
    @endforeach
   </select>
   <p class="small">Your extensions are loaded from your phone account. The SIP username is filled from the one you select. Its existing SIP password is used and is not shown here.</p>
@@ -48,13 +48,17 @@
   <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Optional. 10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
   <label class="f" for="vbProv">Provider</label>
   <select id="vbProv" {{ $demo ? 'disabled' : '' }}>
-   @foreach($providers as $id => $label)
-    <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $label }}</option>
+   @foreach($providers as $id => $p)
+    <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $p['label'] }}{{ empty($p['gateway_supported']) ? ' — calls not yet supported' : '' }}</option>
    @endforeach
   </select>
   <ul class="small" style="margin:8px 0 0;padding-left:18px">
-   <li><b>Grok, OpenAI, Hermes:</b> paste that provider's own API key.</li>
-   <li><b>Claude:</b> create a key at <a href="https://console.anthropic.com" rel="noopener noreferrer">console.anthropic.com</a> under API keys. Anthropic keys start with sk-ant-.</li>
+   @foreach($providers as $p)
+    <li><b>{{ $p['label'] }}:</b> {{ $p['setup_note'] }}
+     @if(!empty($p['setup_url'])) <a href="{{ $p['setup_url'] }}" rel="noopener noreferrer">{{ $p['setup_url'] }}</a>@endif
+     @if(empty($p['gateway_supported'])) Calls are not yet supported.@endif
+    </li>
+   @endforeach
   </ul>
   <label class="f" for="vbKey">Provider API key</label>
   <input type="password" id="vbKey" maxlength="2000" autocomplete="new-password" placeholder="{{ $account['has_key'] ? 'Key saved. Enter a new key to replace it.' : 'Paste your provider key' }}" {{ $demo ? 'disabled' : '' }}>
@@ -80,7 +84,7 @@ var VB=(function(){
   save:function(){
    var btn=document.getElementById('vbSave'); btn.disabled=true;
    var user=document.getElementById('vbUser');
-   post('',{sip_username:user?user.value:'',caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
+   post('',{extension:user?user.value:'',caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
     if(!r.ok){say(false,r.error||'Could not provision the voice account.');btn.disabled=false;return;}
     document.getElementById('vbKey').value='';
     if(r.queued){say(true,'Provisioning has started.');btn.disabled=false;return;}

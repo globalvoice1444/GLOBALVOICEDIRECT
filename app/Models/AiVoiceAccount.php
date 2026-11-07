@@ -13,6 +13,7 @@ class AiVoiceAccount extends Model
         'user_id',
         'account_id',
         'username',
+        'sip_domain',
         'sip_password',
         'enabled',
         'caller_id',

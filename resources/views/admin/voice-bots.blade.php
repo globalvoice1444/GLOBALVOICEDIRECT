@@ -50,7 +50,7 @@
       <div class="muted">Account {{ $row['account_id'] }} · user {{ $row['user_id'] }}</div>
       @if($row['email'] !== '')<div class="muted">{{ $row['email'] }}</div>@endif
      </td>
-     <td>{{ $row['provider'] }}</td>
+     <td>{{ $row['provider'] }}@if(empty($row['calls_supported'])) <span class="muted">calls not yet supported</span>@endif</td>
      <td>{{ $row['has_key'] ? 'Yes' : 'No' }}</td>
      <td>{{ $row['key_updated'] !== '' ? $row['key_updated'] : '—' }}</td>
      <td>{{ $row['username'] }}</td>
