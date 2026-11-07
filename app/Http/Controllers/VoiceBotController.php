@@ -72,7 +72,7 @@ class VoiceBotController extends Controller
         $caller = preg_replace('/\D/', '', (string) $r->input('caller_id', ''));
         $key = trim((string) $r->input('api_key', ''));
         if (!array_key_exists($provider, VoiceAccountProvisioner::providers())) {
-            return $this->j(['ok' => false, 'error' => 'Choose Grok, OpenAI, or Hermes.'], 422);
+            return $this->j(['ok' => false, 'error' => VoiceAccountProvisioner::providerChoiceError()], 422);
         }
         if ($caller !== '' && !preg_match('/\A[0-9]{10,15}\z/', $caller)) {
             return $this->j(['ok' => false, 'error' => 'Caller ID must be 10 to 15 digits, or left blank.'], 422);
@@ -83,6 +83,10 @@ class VoiceBotController extends Controller
 
         $account = AiVoiceAccount::firstOrNew(['user_id' => $uid]);
         if (!$account->exists) $account->account_id = (string) $uid;
+        $storedKey = $account->exists ? (string) ($account->api_key ?? '') : '';
+        if ($message = VoiceAccountProvisioner::providerKeyError($provider, $key, $storedKey)) {
+            return $this->j(['ok' => false, 'error' => $message], 422);
+        }
         $account->sip_password = $password;
         $account->username = $username;
         $account->caller_id = $caller === '' ? null : $caller;

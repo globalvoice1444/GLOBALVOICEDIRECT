@@ -79,7 +79,7 @@
      <li><b>Other tools</b> (Cursor, scripts): send <code>Authorization: Bearer YOUR_KEY</code> to the address above.</li></ol>
     <p class="small" style="margin:10px 0 0">Emails go out from your own connected mailbox, with your daily limit, unsubscribe link and tracking.{{ $d['calls'] ? '' : ' Calling through AI Connect is coming soon.' }}</p>
     @if(config('ai_connect.voice_provisioning_enabled'))
-    <p class="small" style="margin:10px 0 0"><a href="/user/ai-connect/voice-bot">Voice bot</a> — provision a voice account for your assistant.</p>
+    <p class="small" style="margin:10px 0 0"><a href="/user/ai-connect/voice-bot">Voice bot</a> — provision a voice account for your assistant. Providers are Grok, OpenAI, Hermes, and Claude. For Claude, create an API key at <a href="https://console.anthropic.com" rel="noopener noreferrer">console.anthropic.com</a> under API keys. The key starts with sk-ant- and is stored encrypted.</p>
     @endif
     </div>
   </div>

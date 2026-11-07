@@ -63,6 +63,16 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertStringNotContainsString('foreign-secret-pw', json_encode($rows));
     }
 
+    public function test_claude_keys_must_start_with_the_anthropic_prefix(): void
+    {
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('claude', 'sk-ant-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('claude', '', 'sk-ant-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('grok', 'not-an-anthropic-key'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('claude', 'not-an-anthropic-key'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('claude', ''));
+        $this->assertStringContainsString('Claude', VoiceAccountProvisioner::providerChoiceError());
+    }
+
     public function test_menu_visibility_follows_the_feature_flag_and_ai_connect(): void
     {
         config(['ai_connect.voice_provisioning_enabled' => false, 'ai_connect.enabled' => true]);

@@ -41,6 +41,23 @@ class VoiceAccountProvisioner
         return is_array($providers) ? $providers : [];
     }
 
+    public static function providerChoiceError(): string
+    {
+        $names = array_values(self::providers());
+        if (count($names) < 2) return 'Choose a provider.';
+        $last = array_pop($names);
+        return 'Choose ' . implode(', ', $names) . ', or ' . $last . '.';
+    }
+
+    /** Null when the key may be saved. A blank key means leave the stored key unchanged. */
+    public static function providerKeyError(string $provider, string $key, string $stored = ''): ?string
+    {
+        if ($provider !== 'claude') return null;
+        $candidate = $key !== '' ? $key : $stored;
+        if (str_starts_with($candidate, 'sk-ant-')) return null;
+        return 'Enter an Anthropic API key from console.anthropic.com. It starts with sk-ant-.';
+    }
+
     public static function generateSipPassword(int $length = 24): string
     {
         $length = max(12, min(128, $length));

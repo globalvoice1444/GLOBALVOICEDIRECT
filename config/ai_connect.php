@@ -14,6 +14,7 @@ return [
         'grok' => 'Grok',
         'openai' => 'OpenAI',
         'hermes' => 'Hermes',
+        'claude' => 'Claude',
     ],
     'mcp_endpoint' => 'https://app.globalvoicedirect.com/mcp',
     // 2026-11-02 oauth: OAuth 2.1 sign-in for ChatGPT and other OAuth-only MCP clients. Off by default.

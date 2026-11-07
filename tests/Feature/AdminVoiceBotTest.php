@@ -99,6 +99,25 @@ class AdminVoiceBotTest extends TestCase
             'display_name' => 'Bob Buyer',
             'user_email' => 'bob@example.test',
         ]);
+        DB::table('wpgc_users')->insert([
+            'ID' => 10,
+            'user_login' => 'cam',
+            'display_name' => 'Cam Claude',
+            'user_email' => 'cam@example.test',
+        ]);
+        AiVoiceAccount::create([
+            'user_id' => 10,
+            'account_id' => '10',
+            'username' => 'cam-sip',
+            'sip_password' => 'cam-secret-pw1',
+            'enabled' => true,
+            'caller_id' => '4045550100',
+            'provider' => 'claude',
+            'api_key' => 'sk-ant-example',
+            'status' => 'active',
+            'last_result' => 'Created',
+            'provisioned_at' => now(),
+        ]);
 
         $response = $this->asAdmin()->get('/admin/ai-connect/voice-bots');
         $response->assertOk();
@@ -111,12 +130,15 @@ class AdminVoiceBotTest extends TestCase
         $response->assertSee('bob-sip', false);
         $response->assertSee('Grok', false);
         $response->assertSee('OpenAI', false);
+        $response->assertSee('Claude', false);
+        $response->assertSee('Cam Claude', false);
         $response->assertSee('>Yes<', false);
         $response->assertSee('>No<', false);
         $response->assertSee('That username is already in use.', false);
         $response->assertSee('Created', false);
         $response->assertSee('active', false);
         $response->assertSee('error', false);
+        $response->assertDontSee('sk-ant-example', false);
         $response->assertDontSee('provider-key-ada', false);
         $response->assertDontSee('ada-secret-pw', false);
         $response->assertDontSee('bob-secret-pw', false);

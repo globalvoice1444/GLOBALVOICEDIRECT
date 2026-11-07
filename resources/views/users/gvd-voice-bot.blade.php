@@ -52,6 +52,10 @@
     <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $label }}</option>
    @endforeach
   </select>
+  <ul class="small" style="margin:8px 0 0;padding-left:18px">
+   <li><b>Grok, OpenAI, Hermes:</b> paste that provider's own API key.</li>
+   <li><b>Claude:</b> create a key at <a href="https://console.anthropic.com" rel="noopener noreferrer">console.anthropic.com</a> under API keys. Anthropic keys start with sk-ant-.</li>
+  </ul>
   <label class="f" for="vbKey">Provider API key</label>
   <input type="password" id="vbKey" maxlength="2000" autocomplete="new-password" placeholder="{{ $account['has_key'] ? 'Key saved. Enter a new key to replace it.' : 'Paste your provider key' }}" {{ $demo ? 'disabled' : '' }}>
   <p class="small">@if($account['has_key'])<span class="mask" aria-hidden="true">••••••••</span> A key is saved for this account. It is write-only. Leave the field blank to keep it.@else No provider key is saved yet.@endif</p>

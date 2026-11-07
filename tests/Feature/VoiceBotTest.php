@@ -307,8 +307,8 @@ class VoiceBotTest extends TestCase
             'sip_username' => '0205500101',
             'username' => 'ab',
             'caller_id' => '5615550100',
-            'provider' => 'claude',
-        ])->assertStatus(422)->assertJson(['error' => 'Choose Grok, OpenAI, or Hermes.']);
+            'provider' => 'other',
+        ])->assertStatus(422)->assertJson(['error' => 'Choose Grok, OpenAI, Hermes, or Claude.']);
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'sip_username' => '0205500101',
             'caller_id' => '123',
@@ -410,15 +410,61 @@ class VoiceBotTest extends TestCase
         });
     }
 
+    public function test_claude_key_is_sent_to_the_gateway_and_a_bad_prefix_is_rejected(): void
+    {
+        $bad = 'not-an-anthropic-key';
+        $good = 'sk-ant-example';
+        $this->queueGateway(201);
+        $this->bill();
+        $rejected = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'claude',
+            'api_key' => $bad,
+            'caller_id' => '',
+        ]);
+        $rejected->assertStatus(422)->assertJson(['error' => 'Enter an Anthropic API key from console.anthropic.com. It starts with sk-ant-.']);
+        $rejected->assertDontSee($bad, false);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'voice.example.test'));
+
+        $saved = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'claude',
+            'api_key' => $good,
+            'caller_id' => '',
+        ]);
+        $saved->assertOk()->assertDontSee($good, false);
+        $row = AiVoiceAccount::where('user_id', 42)->first();
+        $this->assertSame('claude', $row->provider);
+        $this->assertSame($good, $row->api_key);
+        $this->assertStringNotContainsString($good, (string) DB::table('ai_voice_accounts')->where('user_id', 42)->value('api_key'));
+        Http::assertSent(function ($request) use ($good) {
+            if (!str_contains($request->url(), 'voice.example.test')) return false;
+            $data = $request->data();
+            return $data['provider'] === 'claude'
+                && $data['api_key'] === $good
+                && $data['sip_username'] === '0205500101'
+                && array_key_exists('caller_id', $data)
+                && $data['caller_id'] === null;
+        });
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertSee('>Claude<', false);
+        $page->assertSee('https://console.anthropic.com', false);
+        $page->assertDontSee($good, false);
+        $this->assertSecretsAbsent([$bad, $good, 'live-sip-pass1']);
+    }
+
     public function test_ai_connect_page_links_to_voice_bot_only_when_enabled(): void
     {
         $this->asUser(42)->view('users.gvd-ai-connect', ['d' => $this->aiPage()])
-            ->assertSee('/user/ai-connect/voice-bot', false);
+            ->assertSee('/user/ai-connect/voice-bot', false)
+            ->assertSee('console.anthropic.com', false)
+            ->assertSee('Claude', false);
 
         config(['ai_connect.voice_provisioning_enabled' => false]);
         $this->asUser(42)->view('users.gvd-ai-connect', ['d' => $this->aiPage()])
             ->assertDontSee('/user/ai-connect/voice-bot', false)
-            ->assertDontSee('>Voice bot<', false);
+            ->assertDontSee('>Voice bot<', false)
+            ->assertDontSee('console.anthropic.com', false);
     }
 
     private function asUser(int $id)
