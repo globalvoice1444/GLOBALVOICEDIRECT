@@ -10,14 +10,15 @@ return [
     'voice_gateway_token' => (string) env('GVD_VOICE_GATEWAY_TOKEN', ''),
     // 2026-11-06: customer Voice bot provisioning. Off hides the menu link and 404s the routes.
     'voice_provisioning_enabled' => filter_var(env('AI_VOICE_PROVISIONING_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
-    // Bring-your-own-key providers. gateway_supported is false for every entry:
-    // this repo has no provision-gateway adapter contract. AiConnect's /v1/calls path
-    // mentions Grok only, which is not a list of provision adapters.
+    // Bring-your-own-key providers. gateway_supported is true only when this app's
+    // gateway contract shows that provider can take a live call. Grok is true:
+    // AiConnect posts /v1/calls and describes Asterisk → AudioSocket → Grok.
+    // OpenAI stays false: that call path does not name an OpenAI adapter.
     // category realtime_voice: a speech API the customer can call with their key.
     // category text_llm: a text API; calls need a speech-to-text plus text-to-speech pipeline.
     'voice_providers' => [
         'grok' => [
-            'label' => 'Grok', 'category' => 'realtime_voice', 'gateway_supported' => false,
+            'label' => 'Grok', 'category' => 'realtime_voice', 'gateway_supported' => true,
             'key_prefix' => 'xai-', 'key_hint' => 'An xAI key starts with xai-.',
             'setup_url' => 'https://console.x.ai',
             'setup_note' => 'xAI realtime voice. Create an API key in the xAI console.',

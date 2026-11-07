@@ -79,7 +79,7 @@
      <li><b>Other tools</b> (Cursor, scripts): send <code>Authorization: Bearer YOUR_KEY</code> to the address above.</li></ol>
     <p class="small" style="margin:10px 0 0">Emails go out from your own connected mailbox, with your daily limit, unsubscribe link and tracking.{{ $d['calls'] ? '' : ' Calling through AI Connect is coming soon.' }}</p>
     @if(config('ai_connect.voice_provisioning_enabled'))
-    <p class="small" style="margin:10px 0 0"><a href="/user/ai-connect/voice-bot">Voice bot</a> — provision a voice account for your assistant. Choose a realtime voice provider or a text model such as Claude (<a href="https://console.anthropic.com" rel="noopener noreferrer">console.anthropic.com</a>). A text model needs a speech pipeline before a call can use it. Bring your own credentials. They are stored encrypted and are write-only. Calls are not yet supported until the voice gateway has an adapter for that provider. Setup links for every provider are on the Voice bot page.</p>
+    <p class="small" style="margin:10px 0 0"><a href="/user/ai-connect/voice-bot">Voice bot</a> — provision a voice account for your assistant. Choose a realtime voice provider or a text model such as Claude (<a href="https://console.anthropic.com" rel="noopener noreferrer">console.anthropic.com</a>). A text model needs a speech pipeline before a call can use it. Bring your own credentials. They are stored encrypted and are write-only. Grok uses the live voice gateway. Other providers are not yet supported for calls. Setup links for every provider are on the Voice bot page.</p>
     @endif
     </div>
   </div>

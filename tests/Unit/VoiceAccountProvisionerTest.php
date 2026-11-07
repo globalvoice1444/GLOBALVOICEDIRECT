@@ -2,7 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Models\AiVoiceAccount;
 use App\Services\VoiceAccountProvisioner;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class VoiceAccountProvisionerTest extends TestCase
@@ -70,10 +73,12 @@ class VoiceAccountProvisionerTest extends TestCase
             $this->assertArrayHasKey($id, $registry);
             $this->assertNotSame('', $registry[$id]['label']);
             $this->assertArrayHasKey('setup_note', $registry[$id]);
-            $this->assertFalse((bool) $registry[$id]['gateway_supported']);
+            $this->assertSame($id === 'grok', (bool) $registry[$id]['gateway_supported']);
             $this->assertContains($registry[$id]['category'], ['realtime_voice', 'text_llm']);
             $this->assertNotEmpty($registry[$id]['credential_fields']);
         }
+        $this->assertTrue((bool) $registry['grok']['gateway_supported']);
+        $this->assertFalse((bool) $registry['openai']['gateway_supported']);
         $this->assertSame('realtime_voice', $registry['gemini']['category']);
         $this->assertSame('text_llm', $registry['deepseek']['category']);
         $this->assertSame('text_llm', $registry['bedrock']['category']);
@@ -120,6 +125,50 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('ultravox', $validUltravox));
         $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('ultravox', 'not-an-ultravox-key'));
         $this->assertStringContainsString('Gemini', VoiceAccountProvisioner::providerChoiceError());
+    }
+
+    public function test_put_payload_contains_sip_username_and_null_caller_id(): void
+    {
+        $key = str_repeat('c', 32);
+        config([
+            'app.key' => 'base64:' . base64_encode($key),
+            'ai_connect.voice_gateway_url' => 'https://voice.example.test',
+            'ai_connect.voice_gateway_token' => 'gateway-token',
+        ]);
+        Crypt::swap(new \Illuminate\Encryption\Encrypter($key, 'AES-256-CBC'));
+        Http::fake([
+            'https://voice.example.test/*' => Http::response(['ok' => true], 201),
+        ]);
+
+        $account = new AiVoiceAccount([
+            'account_id' => '42',
+            'username' => '0205500101',
+            'sip_password' => 'live-sip-pass1',
+            'enabled' => true,
+            'caller_id' => '',
+            'provider' => 'grok',
+            'api_key' => 'xai-example',
+            'api_key_dirty' => true,
+        ]);
+
+        $result = (new VoiceAccountProvisioner())->put($account);
+        $this->assertTrue($result->ok);
+        $this->assertSame(201, $result->httpStatus);
+
+        Http::assertSent(function ($request) {
+            $this->assertSame('PUT', $request->method());
+            $this->assertSame('https://voice.example.test/provision/accounts/42', $request->url());
+            $this->assertSame([
+                'sip_username' => '0205500101',
+                'username' => '0205500101',
+                'sip_password' => 'live-sip-pass1',
+                'enabled' => true,
+                'caller_id' => null,
+                'provider' => 'grok',
+                'api_key' => 'xai-example',
+            ], $request->data());
+            return true;
+        });
     }
 
     public function test_menu_visibility_follows_the_feature_flag_and_ai_connect(): void
