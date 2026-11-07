@@ -18,10 +18,12 @@ class AiVoiceAccount extends Model
         'caller_id',
         'provider',
         'api_key',
+        'api_key_updated_at',
         'api_key_dirty',
         'api_key_on_gateway',
         'status',
         'last_error',
+        'last_result',
         'provisioned_at',
     ];
 
@@ -36,6 +38,7 @@ class AiVoiceAccount extends Model
         'enabled' => 'boolean',
         'api_key_dirty' => 'boolean',
         'api_key_on_gateway' => 'boolean',
+        'api_key_updated_at' => 'datetime',
         'provisioned_at' => 'datetime',
     ];
 

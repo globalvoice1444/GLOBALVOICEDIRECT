@@ -143,6 +143,8 @@ class VoiceBotTest extends TestCase
         $this->assertSame('42', $row->account_id);
         $this->assertSame('5615550100', $row->caller_id);
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid($row->sip_password));
+        $this->assertNotNull($row->api_key_updated_at);
+        $this->assertSame('Created', $row->last_result);
         $password = $row->sip_password;
         $stored = DB::table('ai_voice_accounts')->where('user_id', 42)->first();
         $this->assertStringNotContainsString('provider-key-one', $stored->api_key);
@@ -161,6 +163,7 @@ class VoiceBotTest extends TestCase
         $this->assertSame('provider-key-one', $row->api_key);
         $this->assertFalse($row->api_key_dirty);
         $this->assertTrue($row->api_key_on_gateway);
+        $this->assertSame('Updated', $row->last_result);
 
         $rotate = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'alice',
@@ -237,7 +240,9 @@ class VoiceBotTest extends TestCase
 
         $row = AiVoiceAccount::where('user_id', 42)->first();
         $this->assertSame('error', $row->status);
+        $this->assertSame('The voice gateway rejected those account details.', $row->last_result);
         $this->assertStringNotContainsString('provider-key-one', (string) $row->last_error);
+        $this->assertStringNotContainsString('provider-key-one', (string) $row->last_result);
         $this->assertSecretsAbsent(['provider-key-one', $row->sip_password]);
     }
 

@@ -18,10 +18,12 @@ return new class extends Migration {
             $t->string('caller_id', 20);
             $t->string('provider', 20);
             $t->text('api_key')->nullable();
+            $t->timestamp('api_key_updated_at')->nullable();
             $t->boolean('api_key_dirty')->default(false);
             $t->boolean('api_key_on_gateway')->default(false);
             $t->string('status', 20)->default('pending');
             $t->string('last_error', 255)->nullable();
+            $t->string('last_result', 255)->nullable();
             $t->timestamp('provisioned_at')->nullable();
             $t->timestamps();
         });

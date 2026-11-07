@@ -74,6 +74,7 @@ class VoiceBotController extends Controller
         if ($key !== '') {
             $account->api_key = $key;
             $account->api_key_dirty = true;
+            $account->api_key_updated_at = now();
         }
         $account->status = 'pending';
         $account->last_error = null;
@@ -93,6 +94,7 @@ class VoiceBotController extends Controller
             return $this->j(['ok' => true, 'status' => $account?->status]);
         }
         $account->api_key = null;
+        $account->api_key_updated_at = now();
         $account->api_key_dirty = (bool) $account->api_key_on_gateway || $account->provisioned_at !== null;
         $account->save();
         if (!$account->api_key_dirty) {

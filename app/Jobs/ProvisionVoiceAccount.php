@@ -36,18 +36,22 @@ class ProvisionVoiceAccount implements ShouldQueue
                 AiVoiceAccount::where('user_id', $this->userId)->delete();
                 return;
             }
+            $message = mb_substr($result->message, 0, 255);
             AiVoiceAccount::where('user_id', $this->userId)->update([
                 'status' => 'error',
-                'last_error' => mb_substr($result->message, 0, 255),
+                'last_error' => $message,
+                'last_result' => $message,
                 'updated_at' => now(),
             ]);
             return;
         }
 
         $result = $provisioner->put($account);
+        $message = mb_substr($result->message, 0, 255);
         $update = [
             'status' => $result->ok ? 'active' : 'error',
-            'last_error' => $result->ok ? null : mb_substr($result->message, 0, 255),
+            'last_error' => $result->ok ? null : $message,
+            'last_result' => $result->ok ? ($result->httpStatus === 201 ? 'Created' : 'Updated') : $message,
             'updated_at' => now(),
         ];
         if ($result->ok) {
@@ -70,6 +74,7 @@ class ProvisionVoiceAccount implements ShouldQueue
         AiVoiceAccount::where('user_id', $this->userId)->update([
             'status' => 'error',
             'last_error' => 'Provisioning failed. Try again.',
+            'last_result' => 'Provisioning failed. Try again.',
             'updated_at' => now(),
         ]);
     }

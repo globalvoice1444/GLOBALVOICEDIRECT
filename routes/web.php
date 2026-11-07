@@ -1286,6 +1286,12 @@ Route::middleware(['voice.provision', 'authentication'])->group(function () {
     Route::post('user/ai-connect/voice-bot/key/remove', 'VoiceBotController@removeKey')->middleware('throttle:10,1');
     Route::post('user/ai-connect/voice-bot/remove', 'VoiceBotController@remove')->middleware('throttle:10,1');
 });
+// Admin AI Connect > Voice bots. Same flag 404s the routes; adminauth is the admin session guard.
+Route::middleware(['voice.provision', 'adminauth'])->group(function () {
+    Route::get('admin/ai-connect/voice-bots', 'AdminVoiceBotController@index');
+    Route::post('admin/ai-connect/voice-bots/reprovision', 'AdminVoiceBotController@reprovision')->middleware('throttle:20,1');
+    Route::post('admin/ai-connect/voice-bots/deprovision', 'AdminVoiceBotController@deprovision')->middleware('throttle:20,1');
+});
 // 2026-11-02 oauth: OAuth 2.1 for AI Connect (404 unless AI_CONNECT_OAUTH_ENABLED=true)
 Route::post('user/ai-connect/apps/revoke', 'AiConnectController@revokeApp')->middleware(['authentication', 'throttle:30,1']);
 Route::get('oauth/authorize', 'AiOAuthController@authorizeForm')->middleware('throttle:60,1');
