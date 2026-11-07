@@ -80,7 +80,7 @@ class AdminVoiceBotController extends Controller
                 'a.last_error', 'a.last_result', 'a.api_key_updated_at', 'a.provisioned_at',
                 'a.created_at', 'a.updated_at',
                 'u.user_login', 'u.display_name', 'u.user_nicename', 'u.user_email',
-                DB::raw("(a.api_key IS NOT NULL AND a.api_key != '') as has_key"),
+                DB::raw("((a.api_key IS NOT NULL AND a.api_key != '') OR (a.provider_credentials IS NOT NULL AND a.provider_credentials != '')) as has_key"),
             ]);
 
         return $records->map(function ($row) use ($providers) {

@@ -48,8 +48,12 @@
   <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Optional. 10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
   <label class="f" for="vbProv">Provider</label>
   <select id="vbProv" {{ $demo ? 'disabled' : '' }}>
-   @foreach($providers as $id => $p)
-    <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $p['label'] }}{{ empty($p['gateway_supported']) ? ' — calls not yet supported' : '' }}</option>
+   @foreach(['realtime_voice' => 'Realtime voice', 'text_llm' => 'Text models (speech pipeline needed)'] as $cat => $heading)
+    <optgroup label="{{ $heading }}">
+     @foreach($providerGroups[$cat] ?? [] as $id => $p)
+      <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $p['label'] }}{{ empty($p['gateway_supported']) ? ' — calls not yet supported' : '' }}</option>
+     @endforeach
+    </optgroup>
    @endforeach
   </select>
   <ul class="small" style="margin:8px 0 0;padding-left:18px">
@@ -60,9 +64,21 @@
     </li>
    @endforeach
   </ul>
-  <label class="f" for="vbKey">Provider API key</label>
-  <input type="password" id="vbKey" maxlength="2000" autocomplete="new-password" placeholder="{{ $account['has_key'] ? 'Key saved. Enter a new key to replace it.' : 'Paste your provider key' }}" {{ $demo ? 'disabled' : '' }}>
-  <p class="small">@if($account['has_key'])<span class="mask" aria-hidden="true">••••••••</span> A key is saved for this account. It is write-only. Leave the field blank to keep it.@else No provider key is saved yet.@endif</p>
+  <div id="vbCreds">
+   @foreach($providers as $id => $p)
+    @foreach($p['credential_fields'] as $field)
+     <div class="vb-cred" data-provider="{{ $id }}" @if($account['provider'] !== $id) style="display:none" @endif>
+      <label class="f" for="vb-{{ $id }}-{{ $field['name'] }}">{{ $field['label'] }}</label>
+      @if(!empty($field['secret']))
+       <input type="password" id="vb-{{ $id }}-{{ $field['name'] }}" data-field="{{ $field['name'] }}" maxlength="2000" autocomplete="new-password" placeholder="{{ $account['has_key'] ? 'Saved. Enter a new value to replace it.' : 'Paste the value' }}" {{ $demo ? 'disabled' : '' }}>
+      @else
+       <input type="text" id="vb-{{ $id }}-{{ $field['name'] }}" data-field="{{ $field['name'] }}" maxlength="200" autocomplete="off" value="{{ $account['public_credentials'][$field['name']] ?? '' }}" {{ $demo ? 'disabled' : '' }}>
+      @endif
+     </div>
+    @endforeach
+   @endforeach
+  </div>
+  <p class="small">@if($account['has_key'])<span class="mask" aria-hidden="true">••••••••</span> A credential is saved. Secret fields are write-only. Leave a secret blank to keep it.@else No provider credential is saved yet.@endif</p>
   <label class="sw"><input type="checkbox" id="vbOn" {{ $account['enabled'] ? 'checked' : '' }} {{ $demo ? 'disabled' : '' }}> Account enabled</label>
   <p class="small" style="margin-top:10px">The SIP password already on the extension is stored encrypted and sent to the voice gateway. It is not shown on this page.</p>
   <div class="row">
@@ -83,8 +99,13 @@ var VB=(function(){
  return {
   save:function(){
    var btn=document.getElementById('vbSave'); btn.disabled=true;
-   var user=document.getElementById('vbUser');
-   post('',{extension:user?user.value:'',caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
+   var user=document.getElementById('vbUser'), prov=document.getElementById('vbProv').value, creds={};
+   document.querySelectorAll('.vb-cred').forEach(function(el){
+    if (el.getAttribute('data-provider')!==prov) return;
+    var input=el.querySelector('input'); if(!input) return;
+    creds[input.getAttribute('data-field')]=input.value;
+   });
+   post('',{extension:user?user.value:'',caller_id:document.getElementById('vbCid').value,provider:prov,enabled:document.getElementById('vbOn').checked,credentials:creds,api_key:creds.api_key||''}).then(function(r){
     if(!r.ok){say(false,r.error||'Could not provision the voice account.');btn.disabled=false;return;}
     document.getElementById('vbKey').value='';
     if(r.queued){say(true,'Provisioning has started.');btn.disabled=false;return;}
@@ -102,6 +123,10 @@ var VB=(function(){
  };
 })();
 document.getElementById('vbSave').addEventListener('click',function(){VB.save();});
+var provSel=document.getElementById('vbProv');
+if (provSel) provSel.addEventListener('change', function(){
+ document.querySelectorAll('.vb-cred').forEach(function(el){ el.style.display = el.getAttribute('data-provider')===provSel.value ? '' : 'none'; });
+});
 var dk=document.getElementById('vbDropKey'); if(dk) dk.addEventListener('click',function(){VB.dropKey();});
 var dd=document.getElementById('vbDrop'); if(dd) dd.addEventListener('click',function(){VB.drop();});
 </script>

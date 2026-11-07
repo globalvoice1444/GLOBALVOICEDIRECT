@@ -460,6 +460,79 @@ class VoiceBotTest extends TestCase
         $this->assertSecretsAbsent([$bad, $good, 'live-sip-pass1']);
     }
 
+    public function test_multi_field_credentials_are_stored_encrypted_and_not_rendered(): void
+    {
+        $access = 'AKIA' . str_repeat('A', 16);
+        $secret = 'bedrock-secret-example';
+        $this->queueGateway(201);
+        $this->queueGateway(201);
+        $this->bill();
+        $missing = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'bedrock',
+            'credentials' => ['access_key_id' => $access, 'secret_access_key' => $secret],
+        ]);
+        $missing->assertStatus(422);
+        $missing->assertDontSee($secret, false);
+        $this->assertStringContainsString('Region', $missing->json('error'));
+
+        $saved = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'bedrock',
+            'caller_id' => '',
+            'credentials' => ['access_key_id' => $access, 'secret_access_key' => $secret, 'region' => 'us-east-1'],
+        ]);
+        $saved->assertOk()->assertDontSee($secret, false)->assertDontSee($access, false);
+        $row = AiVoiceAccount::where('user_id', 42)->first();
+        $this->assertSame('bedrock', $row->provider);
+        $this->assertSame($secret, $row->provider_credentials['secret_access_key']);
+        $this->assertSame('us-east-1', $row->provider_credentials['region']);
+        $raw = (string) DB::table('ai_voice_accounts')->where('user_id', 42)->value('provider_credentials');
+        $this->assertStringNotContainsString($secret, $raw);
+        $this->assertStringNotContainsString($access, $raw);
+        Http::assertSent(function ($request) use ($access, $secret) {
+            if (!str_contains($request->url(), 'voice.example.test')) return false;
+            $data = $request->data();
+            return ($data['credentials']['access_key_id'] ?? null) === $access
+                && ($data['credentials']['secret_access_key'] ?? null) === $secret
+                && ($data['credentials']['region'] ?? null) === 'us-east-1'
+                && !array_key_exists('api_key', $data)
+                && array_key_exists('caller_id', $data)
+                && $data['caller_id'] === null;
+        });
+
+        $azure = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'azure_openai',
+            'caller_id' => '',
+            'credentials' => [
+                'api_key' => 'azure-key-example',
+                'endpoint' => 'http://example.openai.azure.com',
+                'deployment' => 'gpt-demo',
+            ],
+        ]);
+        $azure->assertStatus(422)->assertDontSee('azure-key-example', false);
+
+        $azureOk = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'azure_openai',
+            'caller_id' => '',
+            'credentials' => [
+                'api_key' => 'azure-key-example',
+                'endpoint' => 'https://example.openai.azure.com',
+                'deployment' => 'gpt-demo',
+            ],
+        ]);
+        $azureOk->assertOk()->assertDontSee('azure-key-example', false);
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertSee('value="https://example.openai.azure.com"', false);
+        $page->assertSee('gpt-demo', false);
+        $page->assertDontSee('azure-key-example', false);
+        $page->assertSee('Realtime voice', false);
+        $page->assertSee('Text models (speech pipeline needed)', false);
+        $this->assertSecretsAbsent([$secret, $access, 'azure-key-example', 'live-sip-pass1']);
+    }
+
     public function test_ai_connect_page_links_to_voice_bot_only_when_enabled(): void
     {
         $this->asUser(42)->view('users.gvd-ai-connect', ['d' => $this->aiPage()])

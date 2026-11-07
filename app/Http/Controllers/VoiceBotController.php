@@ -43,6 +43,7 @@ class VoiceBotController extends Controller
             'extensions' => $extensions,
             'extensionMessage' => $lookup['status'] === 'ok' ? '' : $lookup['message'],
             'providers' => VoiceAccountProvisioner::providers(),
+            'providerGroups' => VoiceAccountProvisioner::providersByCategory(),
             'endpoint' => (string) config('ai_connect.mcp_endpoint', VoiceAccountProvisioner::MCP_ENDPOINT),
             'demo' => Demo::isDemoUser($uid),
             'canProvision' => $lookup['status'] === 'ok' && $allowed !== [],
@@ -82,10 +83,38 @@ class VoiceBotController extends Controller
 
         $account = AiVoiceAccount::firstOrNew(['user_id' => $uid]);
         if (!$account->exists) $account->account_id = (string) $uid;
-        $storedKey = $account->exists ? (string) ($account->api_key ?? '') : '';
-        if ($message = VoiceAccountProvisioner::providerKeyError($provider, $key, $storedKey)) {
-            return $this->j(['ok' => false, 'error' => $message], 422);
+        $incoming = $this->incomingCredentials($r, $key);
+        $stored = is_array($account->provider_credentials) ? $account->provider_credentials : [];
+        if (is_string($account->api_key) && $account->api_key !== '') $stored['api_key'] = $account->api_key;
+        $errors = VoiceAccountProvisioner::credentialErrors($provider, $incoming, $stored);
+        if ($errors) return $this->j(['ok' => false, 'error' => $errors[0]], 422);
+        $merged = $stored;
+        $secretChanged = false;
+        foreach (VoiceAccountProvisioner::credentialFields($provider) as $field) {
+            $name = (string) $field['name'];
+            $value = array_key_exists($name, $incoming) ? trim((string) $incoming[$name]) : '';
+            if (!empty($field['secret'])) {
+                if ($value === '') continue;
+                $merged[$name] = $value;
+                $secretChanged = true;
+            } else {
+                $merged[$name] = $value;
+            }
         }
+        if (isset($merged['api_key']) && $merged['api_key'] !== ($stored['api_key'] ?? null)) {
+            $account->api_key = $merged['api_key'];
+            $account->api_key_dirty = true;
+            $account->api_key_updated_at = now();
+        }
+        $keep = [];
+        foreach (VoiceAccountProvisioner::credentialFields($provider) as $field) {
+            $name = (string) $field['name'];
+            if ($name === 'api_key' || !array_key_exists($name, $merged)) continue;
+            if ($merged[$name] === null || $merged[$name] === '') continue;
+            $keep[$name] = $merged[$name];
+        }
+        $account->provider_credentials = $keep === [] ? null : $keep;
+        if ($secretChanged) $account->credentials_dirty = true;
         $account->sip_password = $password;
         $account->sip_domain = $domain !== '' ? $domain : null;
         $account->username = $username;
@@ -103,6 +132,19 @@ class VoiceBotController extends Controller
 
         ProvisionVoiceAccount::enqueue($uid, ProvisionVoiceAccount::PUT);
         return $this->afterJob($uid, 'Could not provision the voice account.');
+    }
+
+    private function incomingCredentials(Request $r, string $key): array
+    {
+        $incoming = $r->input('credentials', []);
+        if (!is_array($incoming)) $incoming = [];
+        $clean = [];
+        foreach ($incoming as $name => $value) {
+            if (!is_string($name) || !is_scalar($value)) continue;
+            $clean[$name] = trim((string) $value);
+        }
+        if ($r->exists('api_key')) $clean['api_key'] = $key;
+        return $clean;
     }
 
     /** The extension id or SIP login must be one returned by the fresh PortaSwitch list. */
@@ -135,6 +177,13 @@ class VoiceBotController extends Controller
             return $this->j(['ok' => true, 'status' => $account?->status]);
         }
         $account->api_key = null;
+        $creds = is_array($account->provider_credentials) ? $account->provider_credentials : [];
+        foreach (VoiceAccountProvisioner::credentialFields((string) $account->provider) as $field) {
+            if (!empty($field['secret'])) $creds[$field['name']] = null;
+        }
+        unset($creds['api_key']);
+        $account->provider_credentials = $creds === [] ? null : $creds;
+        $account->credentials_dirty = true;
         $account->api_key_updated_at = now();
         $account->api_key_dirty = (bool) $account->api_key_on_gateway || $account->provisioned_at !== null;
         $account->save();
@@ -195,6 +244,7 @@ class VoiceBotController extends Controller
                 'provider' => 'grok',
                 'enabled' => true,
                 'has_key' => false,
+                'public_credentials' => [],
                 'status' => null,
                 'last_error' => null,
                 'provisioned' => false,
@@ -206,9 +256,22 @@ class VoiceBotController extends Controller
             'provider' => (string) $account->provider,
             'enabled' => (bool) $account->enabled,
             'has_key' => $account->hasApiKey(),
+            'public_credentials' => $this->publicCredentials($account),
             'status' => (string) $account->status,
             'last_error' => $account->last_error ? (string) $account->last_error : null,
             'provisioned' => $account->provisioned_at !== null,
         ];
+    }
+
+    private function publicCredentials(AiVoiceAccount $account): array
+    {
+        $stored = is_array($account->provider_credentials) ? $account->provider_credentials : [];
+        $out = [];
+        foreach (VoiceAccountProvisioner::credentialFields((string) $account->provider) as $field) {
+            if (!empty($field['secret'])) continue;
+            $name = (string) $field['name'];
+            $out[$name] = (string) ($stored[$name] ?? '');
+        }
+        return $out;
     }
 }

@@ -66,12 +66,17 @@ class VoiceAccountProvisionerTest extends TestCase
     public function test_provider_registry_marks_calls_unsupported_and_checks_documented_key_formats(): void
     {
         $registry = VoiceAccountProvisioner::providers();
-        foreach (['grok', 'openai', 'gemini', 'claude', 'hermes', 'elevenlabs', 'deepgram', 'ultravox', 'hume'] as $id) {
+        foreach (['grok', 'openai', 'gemini', 'elevenlabs', 'deepgram', 'ultravox', 'hume', 'claude', 'hermes', 'deepseek', 'mistral', 'cohere', 'perplexity', 'llama', 'groq', 'together', 'fireworks', 'openrouter', 'azure_openai', 'bedrock'] as $id) {
             $this->assertArrayHasKey($id, $registry);
             $this->assertNotSame('', $registry[$id]['label']);
             $this->assertArrayHasKey('setup_note', $registry[$id]);
             $this->assertFalse((bool) $registry[$id]['gateway_supported']);
+            $this->assertContains($registry[$id]['category'], ['realtime_voice', 'text_llm']);
+            $this->assertNotEmpty($registry[$id]['credential_fields']);
         }
+        $this->assertSame('realtime_voice', $registry['gemini']['category']);
+        $this->assertSame('text_llm', $registry['deepseek']['category']);
+        $this->assertSame('text_llm', $registry['bedrock']['category']);
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('grok', 'xai-example'));
         $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('grok', 'sk-example'));
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('openai', 'sk-example'));
@@ -85,6 +90,32 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('deepgram', 'any-customer-key'));
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('hume', 'any-customer-key'));
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('hermes', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('perplexity', 'pplx-example'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('perplexity', 'sk-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('llama', 'LLM_example'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('llama', 'sk-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('groq', 'gsk_example'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('groq', 'sk-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('openrouter', 'sk-or-example'));
+        $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('openrouter', 'sk-example'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('deepseek', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('mistral', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('cohere', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('together', 'any-customer-key'));
+        $this->assertNull(VoiceAccountProvisioner::providerKeyError('fireworks', 'any-customer-key'));
+        $access = 'AKIA' . str_repeat('A', 16);
+        $this->assertSame([], VoiceAccountProvisioner::credentialErrors('bedrock', [
+            'access_key_id' => $access, 'secret_access_key' => 'secret-example', 'region' => 'us-east-1',
+        ], []));
+        $this->assertNotSame([], VoiceAccountProvisioner::credentialErrors('bedrock', [
+            'access_key_id' => 'not-an-aws-key', 'secret_access_key' => 'secret-example', 'region' => 'us-east-1',
+        ], []));
+        $this->assertNotSame([], VoiceAccountProvisioner::credentialErrors('azure_openai', [
+            'api_key' => 'azure-key', 'endpoint' => 'http://bad.example', 'deployment' => 'gpt-demo',
+        ], []));
+        $this->assertSame([], VoiceAccountProvisioner::credentialErrors('azure_openai', [
+            'api_key' => 'azure-key', 'endpoint' => 'https://example.openai.azure.com', 'deployment' => 'gpt-demo',
+        ], []));
         $validUltravox = 'abcdEF12.' . str_repeat('a', 32);
         $this->assertNull(VoiceAccountProvisioner::providerKeyError('ultravox', $validUltravox));
         $this->assertNotNull(VoiceAccountProvisioner::providerKeyError('ultravox', 'not-an-ultravox-key'));

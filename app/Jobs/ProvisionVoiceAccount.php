@@ -58,6 +58,7 @@ class ProvisionVoiceAccount implements ShouldQueue
             $update['provisioned_at'] = now();
             if ($result->touchedApiKey) {
                 $update['api_key_dirty'] = false;
+                $update['credentials_dirty'] = false;
                 $update['api_key_on_gateway'] = $result->apiKeyOnGateway;
             }
         }

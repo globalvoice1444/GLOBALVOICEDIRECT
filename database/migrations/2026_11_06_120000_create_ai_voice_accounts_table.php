@@ -19,6 +19,8 @@ return new class extends Migration {
             $t->string('caller_id', 20)->nullable();
             $t->string('provider', 20);
             $t->text('api_key')->nullable();
+            $t->text('provider_credentials')->nullable();
+            $t->boolean('credentials_dirty')->default(false);
             $t->timestamp('api_key_updated_at')->nullable();
             $t->boolean('api_key_dirty')->default(false);
             $t->boolean('api_key_on_gateway')->default(false);

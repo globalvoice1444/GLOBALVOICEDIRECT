@@ -82,6 +82,61 @@ class VoiceAccountProvisioner
         return null;
     }
 
+    /** @return array<int, array<string, mixed>> */
+    public static function credentialFields(string $provider): array
+    {
+        $def = self::provider($provider);
+        $fields = is_array($def['credential_fields'] ?? null) ? $def['credential_fields'] : [];
+        if ($fields === []) return [['name' => 'api_key', 'label' => 'API key', 'secret' => true, 'required' => true]];
+        return $fields;
+    }
+
+    public static function providersByCategory(): array
+    {
+        $groups = ['realtime_voice' => [], 'text_llm' => []];
+        foreach (self::providers() as $id => $row) {
+            $cat = ($row['category'] ?? '') === 'realtime_voice' ? 'realtime_voice' : 'text_llm';
+            $groups[$cat][$id] = $row;
+        }
+        return $groups;
+    }
+
+    /** @param array<string, mixed> $incoming @param array<string, mixed> $stored */
+    public static function credentialErrors(string $provider, array $incoming, array $stored): array
+    {
+        $def = self::provider($provider);
+        if (!$def) return [self::providerChoiceError()];
+        $errors = [];
+        $fields = self::credentialFields($provider);
+        $singleKey = count($fields) === 1 && (($fields[0]['name'] ?? '') === 'api_key');
+        foreach ($fields as $field) {
+            $name = (string) $field['name'];
+            $label = (string) ($field['label'] ?? $name);
+            $value = array_key_exists($name, $incoming) ? trim((string) $incoming[$name]) : '';
+            $previous = trim((string) ($stored[$name] ?? ''));
+            if ($value === '') {
+                if ($previous !== '') continue;
+                if ($name === 'api_key' && $singleKey) {
+                    $prefix = (string) ($def['key_prefix'] ?? '');
+                    $keyPattern = (string) ($def['key_pattern'] ?? '');
+                    if ($prefix !== '' || $keyPattern !== '') $errors[] = 'Enter your ' . ($def['label'] ?? 'provider') . ' API key.';
+                    continue;
+                }
+                if (!empty($field['required'])) $errors[] = $label . ' is required.';
+                continue;
+            }
+            if ($name === 'api_key') {
+                $format = self::providerKeyError($provider, $value, '');
+                if ($format) $errors[] = $format;
+            }
+            $pattern = (string) ($field['pattern'] ?? '');
+            if ($pattern !== '' && !preg_match($pattern, $value)) {
+                $errors[] = (string) ($field['hint'] ?? ($label . ' is not in the expected form.'));
+            }
+        }
+        return $errors;
+    }
+
     public static function generateSipPassword(int $length = 24): string
     {
         $length = max(12, min(128, $length));
@@ -269,12 +324,29 @@ class VoiceAccountProvisioner
             'caller_id' => ($caller === null || $caller === '') ? null : $caller,
             'provider' => (string) $account->provider,
         ];
-        $touched = (bool) $account->api_key_dirty;
+        $fields = self::credentialFields((string) $account->provider);
+        $singleKey = count($fields) === 1 && ($fields[0]['name'] ?? '') === 'api_key';
+        $touched = (bool) $account->api_key_dirty || (bool) $account->credentials_dirty;
         $keyOnGateway = false;
-        if ($touched) {
-            $key = $account->api_key;
-            $payload['api_key'] = (is_string($key) && $key !== '') ? $key : null;
-            $keyOnGateway = $payload['api_key'] !== null;
+        if ($singleKey && !self::hasPublicCredential($fields)) {
+            if ($account->api_key_dirty) {
+                $key = $account->api_key;
+                $payload['api_key'] = (is_string($key) && $key !== '') ? $key : null;
+                $keyOnGateway = $payload['api_key'] !== null;
+            }
+        } elseif ($touched || self::hasPublicCredential($fields)) {
+            $stored = is_array($account->provider_credentials) ? $account->provider_credentials : [];
+            $cred = [];
+            foreach ($fields as $field) {
+                $name = (string) $field['name'];
+                $secret = !empty($field['secret']);
+                if ($secret && !$account->credentials_dirty && $name !== 'api_key') continue;
+                if ($secret && $name === 'api_key' && !$account->api_key_dirty) continue;
+                $value = $name === 'api_key' ? $account->api_key : ($stored[$name] ?? null);
+                $cred[$name] = (is_string($value) && $value !== '') ? $value : null;
+                if ($secret && $cred[$name] !== null) $keyOnGateway = true;
+            }
+            $payload['credentials'] = $cred;
         }
 
         try {
@@ -296,6 +368,12 @@ class VoiceAccountProvisioner
         if ($status === 409) return VoiceProvisionResult::failure('That username is already in use.', 409);
         if ($status === 422) return VoiceProvisionResult::failure('The voice gateway rejected those account details.', 422);
         return VoiceProvisionResult::failure('The voice gateway could not save the account.', $status);
+    }
+
+    private static function hasPublicCredential(array $fields): bool
+    {
+        foreach ($fields as $field) if (empty($field['secret'])) return true;
+        return false;
     }
 
     public function delete(AiVoiceAccount $account): VoiceProvisionResult
