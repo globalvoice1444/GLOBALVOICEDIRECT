@@ -8,8 +8,10 @@ use App\Portal\BillingSession;
 use App\Portal\Demo;
 use App\Portal\VoData;
 use App\Support\AiConnect;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Idempotent voice-gateway provisioning for the signed-in customer's own account.
@@ -91,14 +93,49 @@ class VoiceAccountProvisioner
         return $fields;
     }
 
-    public static function providersByCategory(): array
+    /** @param array<string, array<string, mixed>>|null $providers */
+    public static function providersByCategory(?array $providers = null): array
     {
         $groups = ['realtime_voice' => [], 'text_llm' => []];
-        foreach (self::providers() as $id => $row) {
+        foreach ($providers ?? self::providers() as $id => $row) {
             $cat = ($row['category'] ?? '') === 'realtime_voice' ? 'realtime_voice' : 'text_llm';
             $groups[$cat][$id] = $row;
         }
         return $groups;
+    }
+
+    /** Providers an admin has hidden. No row means the provider stays available. */
+    public static function disabledProviderIds(): array
+    {
+        try {
+            if (!Schema::hasTable('ai_provider_overrides')) return [];
+            return DB::table('ai_provider_overrides')->where('enabled', false)->pluck('provider')
+                ->map(fn ($id) => (string) $id)->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Registry entries the customer may choose. A provider they already use stays
+     * visible so the saved selection is not dropped from the form.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function customerProviders(?string $keep = null): array
+    {
+        $hidden = array_flip(self::disabledProviderIds());
+        $out = [];
+        foreach (self::providers() as $id => $row) {
+            if (isset($hidden[$id]) && $id !== $keep) continue;
+            $out[$id] = $row;
+        }
+        return $out;
+    }
+
+    public static function providerIsOffered(string $provider, ?string $keep = null): bool
+    {
+        return array_key_exists($provider, self::customerProviders($keep));
     }
 
     /** @param array<string, mixed> $incoming @param array<string, mixed> $stored */

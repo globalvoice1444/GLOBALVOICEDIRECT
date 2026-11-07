@@ -1286,6 +1286,13 @@ Route::middleware(['voice.provision', 'authentication'])->group(function () {
     Route::post('user/ai-connect/voice-bot/key/remove', 'VoiceBotController@removeKey')->middleware('throttle:10,1');
     Route::post('user/ai-connect/voice-bot/remove', 'VoiceBotController@remove')->middleware('throttle:10,1');
 });
+// Admin AI Connect. adminauth is the same session guard as adminlogin.
+Route::middleware(['adminauth'])->group(function () {
+    Route::get('admin/ai-connect', 'AdminAiConnectController@index');
+    Route::post('admin/ai-connect/keys/revoke', 'AdminAiConnectController@revokeKey')->middleware('throttle:30,1');
+    Route::post('admin/ai-connect/customers/toggle', 'AdminAiConnectController@toggleCustomer')->middleware('throttle:30,1');
+    Route::post('admin/ai-connect/providers', 'AdminAiConnectController@saveProvider')->middleware('throttle:30,1');
+});
 // Admin AI Connect > Voice bots. Same flag 404s the routes; adminauth is the admin session guard.
 Route::middleware(['voice.provision', 'adminauth'])->group(function () {
     Route::get('admin/ai-connect/voice-bots', 'AdminVoiceBotController@index');

@@ -38,12 +38,14 @@ class VoiceBotController extends Controller
         $selected = $presented['username'];
         if (!in_array($selected, $allowed, true)) $selected = count($allowed) === 1 ? $allowed[0] : '';
         $presented['username'] = $selected;
+        $keep = (string) ($presented['provider'] ?? '');
+        $providers = VoiceAccountProvisioner::customerProviders($keep !== '' ? $keep : null);
         return response()->view('users.gvd-voice-bot', [
             'account' => $presented,
             'extensions' => $extensions,
             'extensionMessage' => $lookup['status'] === 'ok' ? '' : $lookup['message'],
-            'providers' => VoiceAccountProvisioner::providers(),
-            'providerGroups' => VoiceAccountProvisioner::providersByCategory(),
+            'providers' => $providers,
+            'providerGroups' => VoiceAccountProvisioner::providersByCategory($providers),
             'endpoint' => (string) config('ai_connect.mcp_endpoint', VoiceAccountProvisioner::MCP_ENDPOINT),
             'demo' => Demo::isDemoUser($uid),
             'canProvision' => $lookup['status'] === 'ok' && $allowed !== [],
@@ -73,6 +75,10 @@ class VoiceBotController extends Controller
         $key = trim((string) $r->input('api_key', ''));
         if (!array_key_exists($provider, VoiceAccountProvisioner::providers())) {
             return $this->j(['ok' => false, 'error' => VoiceAccountProvisioner::providerChoiceError()], 422);
+        }
+        $existingProvider = (string) (AiVoiceAccount::where('user_id', $uid)->value('provider') ?? '');
+        if (!VoiceAccountProvisioner::providerIsOffered($provider, $existingProvider !== '' ? $existingProvider : null)) {
+            return $this->j(['ok' => false, 'error' => 'That provider is not available.'], 422);
         }
         if ($caller !== '' && !preg_match('/\A[0-9]{10,15}\z/', $caller)) {
             return $this->j(['ok' => false, 'error' => 'Caller ID must be 10 to 15 digits, or left blank.'], 422);
