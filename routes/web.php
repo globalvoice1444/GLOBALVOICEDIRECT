@@ -1279,6 +1279,13 @@ Route::group(['middleware' => ['authentication']], function () {
     Route::post('user/ai-connect/line/link', 'AiConnectController@linkLine')->middleware('throttle:10,1');
     Route::post('user/ai-connect/line/unlink', 'AiConnectController@unlinkLine')->middleware('throttle:10,1');
 });
+// 2026-11-06 Voice bot. voice.provision 404s every route while AI_VOICE_PROVISIONING_ENABLED is off.
+Route::middleware(['voice.provision', 'authentication'])->group(function () {
+    Route::get('user/ai-connect/voice-bot', 'VoiceBotController@index');
+    Route::post('user/ai-connect/voice-bot', 'VoiceBotController@provision')->middleware('throttle:10,1');
+    Route::post('user/ai-connect/voice-bot/key/remove', 'VoiceBotController@removeKey')->middleware('throttle:10,1');
+    Route::post('user/ai-connect/voice-bot/remove', 'VoiceBotController@remove')->middleware('throttle:10,1');
+});
 // 2026-11-02 oauth: OAuth 2.1 for AI Connect (404 unless AI_CONNECT_OAUTH_ENABLED=true)
 Route::post('user/ai-connect/apps/revoke', 'AiConnectController@revokeApp')->middleware(['authentication', 'throttle:30,1']);
 Route::get('oauth/authorize', 'AiOAuthController@authorizeForm')->middleware('throttle:60,1');

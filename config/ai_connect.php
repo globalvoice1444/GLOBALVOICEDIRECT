@@ -8,6 +8,14 @@ return [
     'voice_calls_enabled' => filter_var(env('AI_VOICE_CALLS_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     'voice_gateway_url' => rtrim((string) env('GVD_VOICE_GATEWAY_URL', ''), '/'),
     'voice_gateway_token' => (string) env('GVD_VOICE_GATEWAY_TOKEN', ''),
+    // 2026-11-06: customer Voice bot provisioning. Off hides the menu link and 404s the routes.
+    'voice_provisioning_enabled' => filter_var(env('AI_VOICE_PROVISIONING_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+    'voice_providers' => [
+        'grok' => 'Grok',
+        'openai' => 'OpenAI',
+        'hermes' => 'Hermes',
+    ],
+    'mcp_endpoint' => 'https://app.globalvoicedirect.com/mcp',
     // 2026-11-02 oauth: OAuth 2.1 sign-in for ChatGPT and other OAuth-only MCP clients. Off by default.
     'oauth_enabled' => filter_var(env('AI_CONNECT_OAUTH_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     'oauth_access_ttl' => 3600,   // seconds

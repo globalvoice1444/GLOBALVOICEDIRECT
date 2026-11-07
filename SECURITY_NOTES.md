@@ -169,3 +169,4 @@ Do not commit values. Rotate every credential that previously lived in applicati
 - AI_VOICE_CALLS_ENABLED
 - GVD_VOICE_GATEWAY_URL
 - GVD_VOICE_GATEWAY_TOKEN
+- AI_VOICE_PROVISIONING_ENABLED

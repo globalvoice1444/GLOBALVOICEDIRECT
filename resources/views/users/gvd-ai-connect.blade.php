@@ -77,7 +77,11 @@
     <ol><li><b>Claude:</b> Settings &gt; Connectors &gt; Add custom connector. Paste the address above and your key.</li>
      <li><b>ChatGPT:</b> {{ $d['oauth'] ? 'Settings > Apps & Connectors > Create. Paste the address above, choose OAuth, then sign in with Global Voice Direct and click Allow. ' : '' }}Custom connectors that take actions need a ChatGPT Business, Enterprise or Edu plan.</li>
      <li><b>Other tools</b> (Cursor, scripts): send <code>Authorization: Bearer YOUR_KEY</code> to the address above.</li></ol>
-    <p class="small" style="margin:10px 0 0">Emails go out from your own connected mailbox, with your daily limit, unsubscribe link and tracking.{{ $d['calls'] ? '' : ' Calling through AI Connect is coming soon.' }}</p></div>
+    <p class="small" style="margin:10px 0 0">Emails go out from your own connected mailbox, with your daily limit, unsubscribe link and tracking.{{ $d['calls'] ? '' : ' Calling through AI Connect is coming soon.' }}</p>
+    @if(config('ai_connect.voice_provisioning_enabled'))
+    <p class="small" style="margin:10px 0 0"><a href="/user/ai-connect/voice-bot">Voice bot</a> — provision a voice account for your assistant.</p>
+    @endif
+    </div>
   </div>
  </div>
  <div class="modal hide" id="aiM"><div class="box">
