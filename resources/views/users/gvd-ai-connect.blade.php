@@ -22,7 +22,7 @@
 </style>
 <div class="ai" id="ai">
  <div class="hero"><div><h2>AI Connect</h2><p>Let ChatGPT, Claude or another AI assistant use your Global Voice Direct tools: read your contacts, send email from your own mailbox, start sequences and pull reports. You approve every action before it happens.</p></div>
-  <div><span class="chip" style="background:rgba(255,255,255,.12);color:#fff">{{ count(array_filter($d['keys'], fn($k)=>!$k['revoked'])) }} active key(s)</span></div></div>
+  <div><span class="chip" style="background:rgba(255,255,255,.12);color:#fff">{{ $d['active_key_count'] ?? count(array_filter($d['keys'], fn($k)=>!$k['revoked'])) }} active key(s)</span></div></div>
  @if(!$d['live'])<div class="note"><b>Preview.</b> AI Connect is not switched on for customers yet. {{ $d['demo'] ? 'This sample account is read-only.' : '' }}</div>@endif
  <div class="grid">
   <div>
@@ -35,6 +35,21 @@
       <td>@if($k['revoked'])<span class="off">Revoked</span>@else<button class="btn ghost" onclick="AI.revoke({{ $k['id'] }})" {{ $d['demo'] ? 'disabled' : '' }}>Revoke</button>@endif</td></tr>
     @empty <tr><td colspan="6" class="small">No keys yet. Create one, then paste it into your AI assistant.</td></tr>
     @endforelse</tbody></table></div>
+    @if(($d['keys_pages'] ?? 0) > 0)
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+     @if(($d['keys_page'] ?? 1) > 1)
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['keys_page' => $d['keys_page'] - 1]) }}">Previous</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Previous</span>
+     @endif
+     <span class="small">Page {{ $d['keys_page'] }} of {{ $d['keys_pages'] }}</span>
+     @if(($d['keys_page'] ?? 1) < $d['keys_pages'])
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['keys_page' => $d['keys_page'] + 1]) }}">Next</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Next</span>
+     @endif
+    </div>
+    @endif
     <p class="small" style="margin:10px 0 0">Keys are shown once when you create them. We store only a scrambled fingerprint, so a lost key can't be recovered: revoke it and make a new one.</p></div>
    @if($d['oauth'] || count($d['apps']))
    <div class="card"><h3>Connected apps</h3>

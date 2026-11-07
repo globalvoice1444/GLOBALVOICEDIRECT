@@ -22,7 +22,14 @@ class AiConnectController extends Controller
     public function index()
     {
         $uid = $this->uid();
-        $keys = DB::table('ai_keys')->where('user_id', $uid)->where('prefix', '!=', \App\Support\AiOAuth::KEY_PREFIX)->orderByDesc('id')->get()->map(function ($k) {
+        $perPage = 5;
+        $keyQuery = DB::table('ai_keys')->where('user_id', $uid)->where('prefix', '!=', \App\Support\AiOAuth::KEY_PREFIX)->orderByDesc('id');
+        $keyTotal = (clone $keyQuery)->count();
+        $keyPages = $keyTotal === 0 ? 0 : (int) ceil($keyTotal / $perPage);
+        $keyPage = max(1, (int) request()->query('keys_page', 1));
+        if ($keyPages > 0 && $keyPage > $keyPages) $keyPage = $keyPages;
+        $activeKeyCount = (clone $keyQuery)->whereNull('revoked_at')->count();
+        $keys = ($keyTotal === 0 ? collect() : (clone $keyQuery)->forPage($keyPage, $perPage)->get())->map(function ($k) {
             return ['id' => $k->id, 'name' => $k->name, 'prefix' => $k->prefix, 'scopes' => AiConnect::scopes($k), 'daily_limit' => (int) $k->daily_limit,
                 'used_today' => AiConnect::usedToday($k->id), 'revoked' => (bool) $k->revoked_at,
                 'created' => \Carbon\Carbon::parse($k->created_at)->tz('America/New_York')->format('M j, Y'),
@@ -38,7 +45,7 @@ class AiConnectController extends Controller
         $act = ($activityTotal === 0 ? collect() : (clone $activityQuery)->forPage($activityPage, $perPage)->get())->map(fn ($a) => [
             'when' => \Carbon\Carbon::parse($a->created_at)->tz('America/New_York')->format('M j, g:i A') . ' ET', 'key' => $names[$a->key_id] ?? '-',
             'what' => $a->tool ?: $a->method, 'mode' => $a->mode, 'status' => $a->status, 'summary' => $a->summary])->all();
-        $d = ['keys' => $keys, 'activity' => $act, 'activity_page' => $activityPage, 'activity_pages' => $activityPages, 'enabled' => AiConnect::userEnabled($uid), 'scopes' => config('ai_connect.scopes'),
+        $d = ['keys' => $keys, 'keys_page' => $keyPage, 'keys_pages' => $keyPages, 'active_key_count' => $activeKeyCount, 'activity' => $act, 'activity_page' => $activityPage, 'activity_pages' => $activityPages, 'enabled' => AiConnect::userEnabled($uid), 'scopes' => config('ai_connect.scopes'),
             'endpoint' => url('/mcp'), 'live' => (bool) config('ai_connect.enabled'), 'demo' => Demo::isDemoUser($uid), 'default_limit' => (int) config('ai_connect.default_daily_limit'),
             'max_limit' => (int) config('ai_connect.max_daily_limit'), 'calls' => (bool) config('ai_connect.calls_enabled')];
         // 2026-11-02 oauth: apps connected with "Sign in with Global Voice Direct"

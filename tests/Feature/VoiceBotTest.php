@@ -560,6 +560,56 @@ class VoiceBotTest extends TestCase
         $page->assertDontSee('padding-left:18px', false);
     }
 
+    public function test_ai_connect_keys_are_five_per_page(): void
+    {
+        config(['ai_connect.enabled' => true]);
+        foreach ([
+            database_path('migrations/2026_11_02_210000_create_ai_connect_tables.php'),
+            database_path('migrations/2026_11_02_220000_create_ai_call_lines.php'),
+        ] as $file) {
+            (require $file)->up();
+        }
+        foreach (range(1, 6) as $n) {
+            DB::table('ai_keys')->insert([
+                'user_id' => 42,
+                'name' => 'key-' . $n,
+                'prefix' => 'gvd_live_k' . $n,
+                'hash' => hash('sha256', 'key-hash-' . $n),
+                'scopes' => json_encode(['contacts:read']),
+                'daily_limit' => 200,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        DB::table('ai_keys')->insert([
+            'user_id' => 99,
+            'name' => 'other-customer-key',
+            'prefix' => 'gvd_live_xx',
+            'hash' => hash('sha256', 'other-customer-key'),
+            'scopes' => json_encode(['contacts:read']),
+            'daily_limit' => 200,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $first = $this->asUser(42)->get('/user/ai-connect');
+        $first->assertOk();
+        $first->assertSee('6 active key(s)', false);
+        $first->assertSee('Page 1 of 2', false);
+        $first->assertSee('key-6', false);
+        $first->assertSee('key-2', false);
+        $first->assertDontSee('key-1', false);
+        $first->assertDontSee('other-customer-key', false);
+        $first->assertSee('keys_page=2', false);
+
+        $second = $this->asUser(42)->get('/user/ai-connect?keys_page=2');
+        $second->assertOk();
+        $second->assertSee('Page 2 of 2', false);
+        $second->assertSee('key-1', false);
+        $second->assertDontSee('key-6', false);
+        $second->assertSee('6 active key(s)', false);
+    }
+
     public function test_ai_connect_activity_is_five_per_page(): void
     {
         config(['ai_connect.enabled' => true]);
