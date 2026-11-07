@@ -533,6 +533,83 @@ class VoiceBotTest extends TestCase
         $this->assertSecretsAbsent([$secret, $access, 'azure-key-example', 'live-sip-pass1']);
     }
 
+    public function test_provider_details_open_from_an_info_button(): void
+    {
+        $this->bill();
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertOk();
+        $page->assertSee('<select id="vbProv"', false);
+        $page->assertSee('<optgroup label="Realtime voice">', false);
+        $page->assertSee('aria-label="Provider details"', false);
+        $page->assertSee('id="vbProvInfo"', false);
+        $page->assertSee('id="vbProvModal"', false);
+        $page->assertSee('role="dialog"', false);
+        $page->assertSee('aria-modal="true"', false);
+        $page->assertSee('id="vbProvClose"', false);
+        $page->assertSee('data-vb-close="1"', false);
+        $page->assertSee('id="vbProvDetail"', false);
+        $page->assertSee('id="vbProvData"', false);
+        $page->assertSee('"grok":', false);
+        $page->assertSee('"claude":', false);
+        $page->assertSee('Create an API key in the xAI console.', false);
+        $page->assertSee('Create a key at console.anthropic.com under API keys.', false);
+        $page->assertSee('noopener noreferrer', false);
+        $page->assertSee('Calls are not yet supported.', false);
+        $page->assertSee("e.key==='Escape'", false);
+        $page->assertDontSee('<li class="vb-detail"', false);
+        $page->assertDontSee('padding-left:18px', false);
+    }
+
+    public function test_ai_connect_activity_is_five_per_page(): void
+    {
+        config(['ai_connect.enabled' => true]);
+        foreach ([
+            database_path('migrations/2026_11_02_210000_create_ai_connect_tables.php'),
+            database_path('migrations/2026_11_02_220000_create_ai_call_lines.php'),
+        ] as $file) {
+            (require $file)->up();
+        }
+        foreach (range(1, 6) as $n) {
+            DB::table('ai_activity')->insert([
+                'user_id' => 42,
+                'key_id' => null,
+                'method' => 'tools/call',
+                'tool' => 'list_contacts',
+                'mode' => 'read',
+                'status' => 'ok',
+                'summary' => 'act-' . $n,
+                'created_at' => now(),
+            ]);
+        }
+        DB::table('ai_activity')->insert([
+            'user_id' => 99,
+            'key_id' => null,
+            'method' => 'tools/call',
+            'tool' => 'list_contacts',
+            'mode' => 'read',
+            'status' => 'ok',
+            'summary' => 'other-customer-act',
+            'created_at' => now(),
+        ]);
+
+        $first = $this->asUser(42)->get('/user/ai-connect');
+        $first->assertOk();
+        $first->assertSee('Page 1 of 2', false);
+        $first->assertSee('act-6', false);
+        $first->assertSee('act-2', false);
+        $first->assertDontSee('act-1', false);
+        $first->assertDontSee('other-customer-act', false);
+        $first->assertSee('activity_page=2', false);
+        $first->assertSee('>Next<', false);
+
+        $second = $this->asUser(42)->get('/user/ai-connect?activity_page=2');
+        $second->assertOk();
+        $second->assertSee('Page 2 of 2', false);
+        $second->assertSee('act-1', false);
+        $second->assertDontSee('act-6', false);
+        $second->assertSee('>Previous<', false);
+    }
+
     public function test_ai_connect_page_links_to_voice_bot_only_when_enabled(): void
     {
         $this->asUser(42)->view('users.gvd-ai-connect', ['d' => $this->aiPage()])

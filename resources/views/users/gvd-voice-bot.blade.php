@@ -19,6 +19,19 @@
 .vb .ok{color:#1b8a4b;font-weight:600}.vb .err{color:#c62828;font-weight:600}
 .vb .sw{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:12px}
 .vb .mask{font-family:ui-monospace,monospace;letter-spacing:2px}
+.vb .vb-prov-line{display:flex;align-items:center;gap:8px}
+.vb .vb-prov-line select{flex:1;width:auto}
+.vb .vb-info{width:28px;height:28px;flex:none;border-radius:50%;border:1px solid var(--l);background:#fff;color:var(--n);font-weight:700;line-height:1;cursor:pointer}
+.vb .vb-modal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:24px}
+.vb .vb-modal[hidden]{display:none}
+.vb .vb-modal-back{position:absolute;inset:0;background:rgba(11,31,68,.45);border:0;padding:0;cursor:pointer}
+.vb .vb-modal-panel{position:relative;background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:min(80vh,640px);overflow:auto;padding:16px 18px 18px;box-shadow:0 16px 48px rgba(11,31,68,.28)}
+.vb .vb-modal-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vb .vb-modal-bar h3{margin:0;font-size:16px}
+.vb .vb-modal-x{background:#eef1f7;color:var(--n);border:0;border-radius:8px;padding:6px 10px;font-weight:600;cursor:pointer}
+.vb .vb-detail{margin-top:12px}
+.vb .vb-detail p{margin:6px 0}
+.vb .vb-detail a{word-break:break-all}
 </style>
 <div class="vb" id="vb">
  <div class="hero"><h2>Voice bot</h2><p>Give your assistant a voice account on your line. Your provider key and the SIP password stay on this account only, and they are never shown again after you save them.</p></div>
@@ -47,23 +60,31 @@
   <label class="f" for="vbCid">Caller ID</label>
   <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Optional. 10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
   <label class="f" for="vbProv">Provider</label>
-  <select id="vbProv" {{ $demo ? 'disabled' : '' }}>
-   @foreach(['realtime_voice' => 'Realtime voice', 'text_llm' => 'Text models (speech pipeline needed)'] as $cat => $heading)
-    <optgroup label="{{ $heading }}">
-     @foreach($providerGroups[$cat] ?? [] as $id => $p)
-      <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $p['label'] }}{{ empty($p['gateway_supported']) ? ' — calls not yet supported' : '' }}</option>
-     @endforeach
-    </optgroup>
-   @endforeach
-  </select>
-  <ul class="small" style="margin:8px 0 0;padding-left:18px">
-   @foreach($providers as $p)
-    <li><b>{{ $p['label'] }}:</b> {{ $p['setup_note'] }}
-     @if(!empty($p['setup_url'])) <a href="{{ $p['setup_url'] }}" rel="noopener noreferrer">{{ $p['setup_url'] }}</a>@endif
-     @if(empty($p['gateway_supported'])) Calls are not yet supported.@endif
-    </li>
-   @endforeach
-  </ul>
+  <div class="vb-prov-line">
+   <select id="vbProv" {{ $demo ? 'disabled' : '' }}>
+    @foreach(['realtime_voice' => 'Realtime voice', 'text_llm' => 'Text models (speech pipeline needed)'] as $cat => $heading)
+     <optgroup label="{{ $heading }}">
+      @foreach($providerGroups[$cat] ?? [] as $id => $p)
+       <option value="{{ $id }}" {{ $account['provider'] === $id ? 'selected' : '' }}>{{ $p['label'] }}{{ empty($p['gateway_supported']) ? ' — calls not yet supported' : '' }}</option>
+      @endforeach
+     </optgroup>
+    @endforeach
+   </select>
+   <button type="button" class="vb-info" id="vbProvInfo" aria-label="Provider details" aria-haspopup="dialog" aria-controls="vbProvModal" aria-expanded="false">?</button>
+  </div>
+  <div class="vb-modal" id="vbProvModal" hidden>
+   <button type="button" class="vb-modal-back" data-vb-close="1" aria-label="Close"></button>
+   <div class="vb-modal-panel" role="dialog" aria-modal="true" aria-labelledby="vbProvTitle">
+    <div class="vb-modal-bar">
+     <h3 id="vbProvTitle">Provider details</h3>
+     <button type="button" class="vb-modal-x" id="vbProvClose" aria-label="Close">Close</button>
+    </div>
+    <div id="vbProvDetail" class="vb-detail"></div>
+   </div>
+  </div>
+  <script type="application/json" id="vbProvData"><?php echo json_encode(collect($providers)->map(function ($p) {
+    return ['label' => $p['label'], 'note' => $p['setup_note'], 'url' => $p['setup_url'] ?? '', 'calls' => !empty($p['gateway_supported'])];
+  }), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES); ?></script>
   <div id="vbCreds">
    @foreach($providers as $id => $p)
     @foreach($p['credential_fields'] as $field)
@@ -123,10 +144,31 @@ var VB=(function(){
  };
 })();
 document.getElementById('vbSave').addEventListener('click',function(){VB.save();});
-var provSel=document.getElementById('vbProv');
-if (provSel) provSel.addEventListener('change', function(){
- document.querySelectorAll('.vb-cred').forEach(function(el){ el.style.display = el.getAttribute('data-provider')===provSel.value ? '' : 'none'; });
-});
+(function(){
+ var openBtn=document.getElementById('vbProvInfo'), modal=document.getElementById('vbProvModal'), closeBtn=document.getElementById('vbProvClose'), detail=document.getElementById('vbProvDetail'), sel=document.getElementById('vbProv'), dataEl=document.getElementById('vbProvData'), lastFocus=null, map={};
+ if(!openBtn||!modal||!detail) return;
+ try { map=JSON.parse(dataEl?dataEl.textContent:'{}')||{}; } catch(e) { map={}; }
+ function showCreds(){if(!sel)return;document.querySelectorAll('.vb-cred').forEach(function(el){el.style.display=el.getAttribute('data-provider')===sel.value?'':'none';});}
+ function render(){
+  var row=sel?map[sel.value]:null;
+  detail.textContent='';
+  if(!row) return;
+  var name=document.createElement('b'); name.id='vbProvDetailName'; name.textContent=row.label||'';
+  var note=document.createElement('p'); note.id='vbProvDetailNote'; note.textContent=row.note||'';
+  var status=document.createElement('p'); status.id='vbProvDetailStatus'; status.textContent=row.calls?'Calls are supported.':'Calls are not yet supported.';
+  detail.appendChild(name); detail.appendChild(note);
+  if(row.url){var p=document.createElement('p'), a=document.createElement('a'); a.href=row.url; a.target='_blank'; a.rel='noopener noreferrer'; a.textContent=row.url; p.appendChild(a); detail.appendChild(p);}
+  detail.appendChild(status);
+ }
+ function openModal(){render();lastFocus=document.activeElement;modal.hidden=false;openBtn.setAttribute('aria-expanded','true');if(closeBtn)closeBtn.focus();}
+ function closeModal(){if(modal.hidden)return;modal.hidden=true;openBtn.setAttribute('aria-expanded','false');if(lastFocus&&lastFocus.focus)lastFocus.focus();else openBtn.focus();}
+ if(sel) sel.addEventListener('change', function(){showCreds();render();});
+ openBtn.addEventListener('click',openModal);
+ if(closeBtn) closeBtn.addEventListener('click',closeModal);
+ modal.addEventListener('click',function(e){if(e.target.getAttribute('data-vb-close')==='1')closeModal();});
+ document.addEventListener('keydown',function(e){if((e.key==='Escape'||e.key==='Esc')&&!modal.hidden){e.preventDefault();closeModal();}});
+ render();
+})();
 var dk=document.getElementById('vbDropKey'); if(dk) dk.addEventListener('click',function(){VB.dropKey();});
 var dd=document.getElementById('vbDrop'); if(dd) dd.addEventListener('click',function(){VB.drop();});
 </script>

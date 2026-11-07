@@ -54,7 +54,23 @@
      <tr><td>{{ $a['when'] }}</td><td>{{ $a['key'] }}</td><td class="mono">{{ $a['what'] }}@if($a['mode']) <span class="small">({{ $a['mode'] }})</span>@endif</td>
       <td class="{{ $a['status']==='ok' ? 'ok' : ($a['status']==='error' ? 'err' : 'wait') }}">{{ ucfirst($a['status']) }}</td><td class="small">{{ $a['summary'] }}</td></tr>
     @empty <tr><td colspan="5" class="small">Nothing yet. Every request from an AI assistant shows up here.</td></tr>
-    @endforelse</tbody></table></div></div>
+    @endforelse</tbody></table></div>
+    @if(($d['activity_pages'] ?? 0) > 0)
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+     @if(($d['activity_page'] ?? 1) > 1)
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['activity_page' => $d['activity_page'] - 1]) }}">Previous</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Previous</span>
+     @endif
+     <span class="small">Page {{ $d['activity_page'] }} of {{ $d['activity_pages'] }}</span>
+     @if(($d['activity_page'] ?? 1) < $d['activity_pages'])
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['activity_page' => $d['activity_page'] + 1]) }}">Next</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Next</span>
+     @endif
+    </div>
+    @endif
+    </div>
   </div>
   <div>
    <div class="card kill"><h3>Master switch</h3>

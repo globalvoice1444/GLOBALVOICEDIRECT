@@ -29,10 +29,16 @@ class AiConnectController extends Controller
                 'last_used' => $k->last_used_at ? \Carbon\Carbon::parse($k->last_used_at)->tz('America/New_York')->format('M j, g:i A') . ' ET' : 'Never'];
         })->all();
         $names = DB::table('ai_keys')->where('user_id', $uid)->pluck('name', 'id');
-        $act = DB::table('ai_activity')->where('user_id', $uid)->orderByDesc('id')->limit(50)->get()->map(fn ($a) => [
+        $perPage = 5;
+        $activityQuery = DB::table('ai_activity')->where('user_id', $uid)->orderByDesc('id');
+        $activityTotal = (clone $activityQuery)->count();
+        $activityPages = $activityTotal === 0 ? 0 : (int) ceil($activityTotal / $perPage);
+        $activityPage = max(1, (int) request()->query('activity_page', 1));
+        if ($activityPages > 0 && $activityPage > $activityPages) $activityPage = $activityPages;
+        $act = ($activityTotal === 0 ? collect() : (clone $activityQuery)->forPage($activityPage, $perPage)->get())->map(fn ($a) => [
             'when' => \Carbon\Carbon::parse($a->created_at)->tz('America/New_York')->format('M j, g:i A') . ' ET', 'key' => $names[$a->key_id] ?? '-',
             'what' => $a->tool ?: $a->method, 'mode' => $a->mode, 'status' => $a->status, 'summary' => $a->summary])->all();
-        $d = ['keys' => $keys, 'activity' => $act, 'enabled' => AiConnect::userEnabled($uid), 'scopes' => config('ai_connect.scopes'),
+        $d = ['keys' => $keys, 'activity' => $act, 'activity_page' => $activityPage, 'activity_pages' => $activityPages, 'enabled' => AiConnect::userEnabled($uid), 'scopes' => config('ai_connect.scopes'),
             'endpoint' => url('/mcp'), 'live' => (bool) config('ai_connect.enabled'), 'demo' => Demo::isDemoUser($uid), 'default_limit' => (int) config('ai_connect.default_daily_limit'),
             'max_limit' => (int) config('ai_connect.max_daily_limit'), 'calls' => (bool) config('ai_connect.calls_enabled')];
         // 2026-11-02 oauth: apps connected with "Sign in with Global Voice Direct"
