@@ -45,6 +45,24 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertSame('Ext 101 — Front Desk · 0205500101', $choices[0]['label']);
     }
 
+    public function test_owned_extensions_keep_only_this_customers_accounts_and_drop_passwords(): void
+    {
+        $rows = VoiceAccountProvisioner::ownedExtensions(
+            [
+                ['i_account' => 9, 'id' => '101', 'account_id' => '0205500101', 'name' => 'Front Desk', 'type' => 'Account'],
+                ['i_account' => 77, 'id' => '109', 'account_id' => 'foreign-login', 'name' => 'Other', 'type' => 'Account'],
+            ],
+            [
+                ['i_account' => 9, 'i_customer' => 55, 'id' => '0205500101', 'h323_password' => 'live-sip-pass1'],
+                ['i_account' => 77, 'i_customer' => 99, 'id' => 'foreign-login', 'h323_password' => 'foreign-secret-pw'],
+            ],
+            55
+        );
+        $this->assertSame(['0205500101'], array_column($rows, 'username'));
+        $this->assertStringNotContainsString('live-sip-pass1', json_encode($rows));
+        $this->assertStringNotContainsString('foreign-secret-pw', json_encode($rows));
+    }
+
     public function test_menu_visibility_follows_the_feature_flag_and_ai_connect(): void
     {
         config(['ai_connect.voice_provisioning_enabled' => false, 'ai_connect.enabled' => true]);

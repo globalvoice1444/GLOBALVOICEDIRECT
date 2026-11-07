@@ -83,30 +83,108 @@ class VoiceAccountProvisioner
             $label = $login;
             if ($ext !== '') $label = 'Ext ' . $ext . ($name !== '' ? ' — ' . $name : '') . ' · ' . $login;
             elseif ($name !== '') $label = $name . ' · ' . $login;
-            $out[$login] = ['username' => $login, 'label' => $label, 'ext' => $ext, 'name' => $name];
+            $out[$login] = [
+                'username' => $login,
+                'label' => $label,
+                'ext' => $ext,
+                'name' => $name,
+                'i_account' => (int) ($e['i_account'] ?? 0),
+            ];
         }
         return array_values($out);
     }
 
-    /** This customer's own extension SIP logins. Empty when billing has no extensions. */
-    public static function extensionsFor(int $userId): array
+    /**
+     * Keep extensions whose PortaSwitch account belongs to this i_customer.
+     * SIP username is Account/get_account_list id (falls back to the extension account_id). Passwords are dropped.
+     *
+     * @return array<int, array{username: string, label: string, ext: string, name: string, i_account: int}>
+     */
+    public static function ownedExtensions(array $extensionList, array $accountList, int $iCustomer): array
     {
-        if ($userId <= 0) return [];
-        if (Demo::isDemoUser($userId)) return self::sipChoices(Demo::extensions()['rows'] ?? []);
+        $ids = [];
+        foreach ($accountList as $a) {
+            if (!is_array($a)) continue;
+            $ia = (int) ($a['i_account'] ?? 0);
+            if ($ia <= 0 || (int) ($a['i_customer'] ?? 0) !== $iCustomer) continue;
+            $ids[$ia] = trim((string) ($a['id'] ?? ''));
+        }
+        $rows = [];
+        foreach ($extensionList as $e) {
+            if (!is_array($e) || (string) ($e['type'] ?? 'Account') !== 'Account') continue;
+            $ia = (int) ($e['i_account'] ?? 0);
+            if ($ia <= 0 || !array_key_exists($ia, $ids)) continue;
+            $rows[] = [
+                'i_account' => $ia,
+                'account_id' => $ids[$ia] !== '' ? $ids[$ia] : (string) ($e['account_id'] ?? ''),
+                'id' => (string) ($e['id'] ?? ($e['ext'] ?? '')),
+                'name' => (string) ($e['name'] ?? ''),
+                'type' => 'Account',
+            ];
+        }
+        return self::sipChoices($rows);
+    }
+
+    /**
+     * Live extension list for this customer.
+     * Calls Customer/get_extensions_list and Account/get_account_list for the session i_customer.
+     *
+     * @return array{status: string, message: string, extensions: array}
+     */
+    public static function lookupExtensions(int $userId): array
+    {
+        $none = 'No SIP extension is available on this account. Sign in with your phone-line login so we can read your extensions. Provisioning stays off until an extension is available.';
+        $failed = 'We could not load your extensions from the phone system. Please try again.';
+        if ($userId <= 0) return ['status' => 'empty', 'message' => $none, 'extensions' => []];
+        if (Demo::isDemoUser($userId)) {
+            $rows = self::sipChoices(Demo::extensions()['rows'] ?? []);
+            return $rows
+                ? ['status' => 'ok', 'message' => '', 'extensions' => $rows]
+                : ['status' => 'empty', 'message' => $none, 'extensions' => []];
+        }
         try {
             $k = BillingSession::get();
-            if (!$k) return [];
-            if (!in_array((int) ($k['i_customer'] ?? 0), FaxInbox::tenantsForUser($userId), true)) return [];
+            if (!$k) return ['status' => 'empty', 'message' => $none, 'extensions' => []];
+            if (!in_array((int) ($k['i_customer'] ?? 0), FaxInbox::tenantsForUser($userId), true)) {
+                return ['status' => 'empty', 'message' => $none, 'extensions' => []];
+            }
             $v = new VoData($k);
             try {
-                $list = $v->call('Customer/get_extensions_list', ['i_customer' => $v->ic])['extensions_list'] ?? [];
+                $ext = $v->call('Customer/get_extensions_list', ['i_customer' => $v->ic]);
+                $acc = $v->call('Account/get_account_list', ['i_customer' => $v->ic, 'limit' => 1000]);
             } finally {
                 try { $v->close(); } catch (\Throwable $e) {}
             }
-            return self::sipChoices(is_array($list) ? $list : []);
+            $rows = self::ownedExtensions($ext['extensions_list'] ?? [], $acc['account_list'] ?? [], (int) $v->ic);
+            if ($rows === []) return ['status' => 'empty', 'message' => 'No SIP extension is on your phone account yet.', 'extensions' => []];
+            return ['status' => 'ok', 'message' => '', 'extensions' => $rows];
         } catch (\Throwable $e) {
             Log::warning('voice bot extensions unavailable', ['user_id' => $userId, 'error' => $e::class]);
-            return [];
+            return ['status' => 'error', 'message' => $failed, 'extensions' => []];
+        }
+    }
+
+    /** Existing SIP password for one owned extension. Null unless Account/get_account_info confirms i_customer and id. */
+    public static function extensionPassword(int $userId, int $iAccount, string $username): ?string
+    {
+        try {
+            $k = BillingSession::get();
+            if (!$k || $iAccount <= 0) return null;
+            if (!in_array((int) ($k['i_customer'] ?? 0), FaxInbox::tenantsForUser($userId), true)) return null;
+            $v = new VoData($k);
+            try {
+                $info = $v->call('Account/get_account_info', ['i_account' => $iAccount, 'detailed_info' => 1])['account_info'] ?? null;
+            } finally {
+                try { $v->close(); } catch (\Throwable $e) {}
+            }
+            if (!is_array($info)) return null;
+            if ((int) ($info['i_customer'] ?? 0) !== (int) $k['i_customer']) return null;
+            if ((string) ($info['id'] ?? '') !== $username) return null;
+            $password = (string) ($info['h323_password'] ?? '');
+            return $password === '' ? null : $password;
+        } catch (\Throwable $e) {
+            Log::warning('voice bot extension password unavailable', ['user_id' => $userId, 'i_account' => $iAccount, 'error' => $e::class]);
+            return null;
         }
     }
 

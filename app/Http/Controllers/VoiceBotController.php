@@ -31,7 +31,8 @@ class VoiceBotController extends Controller
     {
         $uid = $this->uid();
         $account = AiVoiceAccount::where('user_id', $uid)->first();
-        $extensions = VoiceAccountProvisioner::extensionsFor($uid);
+        $lookup = VoiceAccountProvisioner::lookupExtensions($uid);
+        $extensions = $lookup['extensions'];
         $allowed = array_column($extensions, 'username');
         $presented = $this->present($account);
         $selected = $presented['username'];
@@ -40,10 +41,11 @@ class VoiceBotController extends Controller
         return response()->view('users.gvd-voice-bot', [
             'account' => $presented,
             'extensions' => $extensions,
+            'extensionMessage' => $lookup['status'] === 'ok' ? '' : $lookup['message'],
             'providers' => VoiceAccountProvisioner::providers(),
             'endpoint' => (string) config('ai_connect.mcp_endpoint', VoiceAccountProvisioner::MCP_ENDPOINT),
             'demo' => Demo::isDemoUser($uid),
-            'canProvision' => $allowed !== [],
+            'canProvision' => $lookup['status'] === 'ok' && $allowed !== [],
         ])->withHeaders(self::NC);
     }
 
@@ -52,15 +54,20 @@ class VoiceBotController extends Controller
         $uid = $this->uid();
         if (Demo::isDemoUser($uid)) return $this->j(['ok' => false, 'error' => Demo::READONLY], 422);
 
-        $allowed = array_column(VoiceAccountProvisioner::extensionsFor($uid), 'username');
-        if ($allowed === []) {
-            return $this->j(['ok' => false, 'error' => self::NO_EXTENSION], 422);
-        }
+        $lookup = VoiceAccountProvisioner::lookupExtensions($uid);
+        if ($lookup['status'] === 'error') return $this->j(['ok' => false, 'error' => $lookup['message']], 422);
+        $extensions = $lookup['extensions'];
+        if ($extensions === []) return $this->j(['ok' => false, 'error' => $lookup['message'] ?: self::NO_EXTENSION], 422);
+        $byUser = [];
+        foreach ($extensions as $ex) $byUser[$ex['username']] = $ex;
         $picked = trim((string) $r->input('sip_username', $r->input('username', '')));
-        $username = count($allowed) === 1 ? $allowed[0] : $picked;
-        if (!in_array($username, $allowed, true)) {
-            return $this->j(['ok' => false, 'error' => 'Choose one of your extensions.'], 422);
+        if ($picked === '' && count($byUser) === 1) $picked = (string) array_key_first($byUser);
+        if (!isset($byUser[$picked])) return $this->j(['ok' => false, 'error' => 'That extension is not on your account.'], 422);
+        $password = VoiceAccountProvisioner::extensionPassword($uid, (int) $byUser[$picked]['i_account'], $picked);
+        if ($password === null || !VoiceAccountProvisioner::passwordIsValid($password)) {
+            return $this->j(['ok' => false, 'error' => 'We could not use the SIP password already on that extension.'], 422);
         }
+        $username = $picked;
         $provider = (string) $r->input('provider', '');
         $caller = preg_replace('/\D/', '', (string) $r->input('caller_id', ''));
         $key = trim((string) $r->input('api_key', ''));
@@ -75,12 +82,8 @@ class VoiceBotController extends Controller
         }
 
         $account = AiVoiceAccount::firstOrNew(['user_id' => $uid]);
-        if (!$account->exists) {
-            $account->account_id = (string) $uid;
-            $account->sip_password = VoiceAccountProvisioner::generateSipPassword();
-        } elseif (!VoiceAccountProvisioner::passwordIsValid((string) $account->sip_password)) {
-            $account->sip_password = VoiceAccountProvisioner::generateSipPassword();
-        }
+        if (!$account->exists) $account->account_id = (string) $uid;
+        $account->sip_password = $password;
         $account->username = $username;
         $account->caller_id = $caller === '' ? null : $caller;
         $account->provider = $provider;

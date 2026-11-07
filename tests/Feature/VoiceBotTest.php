@@ -21,6 +21,9 @@ class VoiceBotTest extends TestCase
     private array $extensionRows = [];
     private array $gatewayQueue = [];
     private bool $gatewayThrows = false;
+    private bool $extensionsFault = false;
+    private string $sipPassword = 'live-sip-pass1';
+    private array $sipPasswords = [];
 
     protected function setUp(): void
     {
@@ -44,6 +47,9 @@ class VoiceBotTest extends TestCase
         $this->extensionRows = [];
         $this->gatewayQueue = [];
         $this->gatewayThrows = false;
+        $this->extensionsFault = false;
+        $this->sipPassword = 'live-sip-pass1';
+        $this->sipPasswords = [];
 
         config([
             'ai_connect.voice_provisioning_enabled' => true,
@@ -117,9 +123,11 @@ class VoiceBotTest extends TestCase
         $response->assertOk();
         $response->assertSee('https://app.globalvoicedirect.com/mcp', false);
         $response->assertSee('Voice bot', false);
-        $response->assertSee('readonly', false);
-        $response->assertSee('value="0205500101"', false);
-        $response->assertSee('This is the SIP username on your extension.', false);
+        $response->assertSee('<select id="vbUser"', false);
+        $response->assertSee('value="0205500101" selected', false);
+        $response->assertSee('Ext 101', false);
+        $response->assertDontSee('live-sip-pass1', false);
+        $response->assertDontSee('foreign-secret-pw', false);
         $response->assertDontSee('alice-voice', false);
         $response->assertDontSee('bob-voice', false);
         $response->assertDontSee('provider-key-alice', false);
@@ -139,6 +147,7 @@ class VoiceBotTest extends TestCase
         $this->queueGateway(200);
         $this->bill();
         $create = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
             'username' => 'client-picked-name',
             'caller_id' => '(561) 555-0100',
             'provider' => 'grok',
@@ -153,6 +162,7 @@ class VoiceBotTest extends TestCase
         $this->assertSame('42', $row->account_id);
         $this->assertSame('0205500101', $row->username);
         $this->assertSame('5615550100', $row->caller_id);
+        $this->assertSame('live-sip-pass1', $row->sip_password);
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid($row->sip_password));
         $this->assertNotNull($row->api_key_updated_at);
         $this->assertSame('Created', $row->last_result);
@@ -163,6 +173,7 @@ class VoiceBotTest extends TestCase
         $this->assertStringNotContainsString($password, serialize(new ProvisionVoiceAccount(42, ProvisionVoiceAccount::PUT)));
 
         $again = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
             'username' => 'client-picked-name',
             'caller_id' => '5615550100',
             'provider' => 'openai',
@@ -177,6 +188,7 @@ class VoiceBotTest extends TestCase
         $this->assertSame('Updated', $row->last_result);
 
         $rotate = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
             'username' => 'still-ignored',
             'caller_id' => '5615550100',
             'provider' => 'hermes',
@@ -204,6 +216,7 @@ class VoiceBotTest extends TestCase
         $this->assertTrue($voice[0]->hasHeader('Authorization', 'Bearer gateway-token-test'));
         $this->assertSame('0205500101', $first['sip_username']);
         $this->assertSame('0205500101', $first['username']);
+        $this->assertSame('live-sip-pass1', $first['sip_password']);
         $this->assertSame($password, $first['sip_password']);
         $this->assertTrue($first['enabled']);
         $this->assertSame('5615550100', $first['caller_id']);
@@ -219,7 +232,7 @@ class VoiceBotTest extends TestCase
         $this->assertArrayHasKey('api_key', $voice[3]->data());
         $this->assertNull($voice[3]->data()['api_key']);
         $this->assertSame('DELETE', $voice[4]->method());
-        $this->assertSecretsAbsent(['provider-key-one', 'provider-key-two', $password, 'gateway-token-test']);
+        $this->assertSecretsAbsent(['provider-key-one', 'provider-key-two', $password, 'live-sip-pass1', 'gateway-token-test']);
     }
 
     public function test_gateway_conflicts_and_validation_do_not_echo_secrets(): void
@@ -291,12 +304,13 @@ class VoiceBotTest extends TestCase
     {
         $this->bill();
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
             'username' => 'ab',
             'caller_id' => '5615550100',
             'provider' => 'claude',
         ])->assertStatus(422)->assertJson(['error' => 'Choose Grok, OpenAI, or Hermes.']);
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
-            'sip_username' => 'client-picked-name',
+            'sip_username' => '0205500101',
             'caller_id' => '123',
             'provider' => 'grok',
         ])->assertStatus(422)->assertJson(['error' => 'Caller ID must be 10 to 15 digits, or left blank.']);
@@ -321,8 +335,40 @@ class VoiceBotTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_phone_system_with_no_extensions_disables_provisioning(): void
+    {
+        $this->bill(42, []);
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertOk();
+        $page->assertSee('No SIP extension is on your phone account yet.', false);
+        $page->assertSee('id="vbSave" type="button" disabled', false);
+        $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => 'foreign-login',
+            'provider' => 'grok',
+        ])->assertStatus(422)->assertJson(['error' => 'No SIP extension is on your phone account yet.']);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'voice.example.test'));
+    }
+
+    public function test_phone_system_error_is_shown_without_calling_the_gateway(): void
+    {
+        $this->extensionsFault = true;
+        $this->bill();
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertOk();
+        $page->assertSee('We could not load your extensions from the phone system.', false);
+        $page->assertSee('id="vbSave" type="button" disabled', false);
+        $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => '0205500101',
+            'provider' => 'grok',
+        ])->assertStatus(422)->assertJson(['error' => 'We could not load your extensions from the phone system. Please try again.']);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'voice.example.test'));
+        $joined = implode("\n", $this->logs);
+        $this->assertStringNotContainsString('live-sip-pass1', $joined);
+    }
+
     public function test_customer_picks_one_of_their_extensions_and_blank_caller_id_is_null(): void
     {
+        $this->sipPasswords = [9 => 'live-sip-pass1', 10 => 'live-sip-pass2'];
         $this->queueGateway(201);
         $this->bill(42, [
             ['i_account' => 9, 'id' => '101', 'account_id' => '0205500101', 'name' => 'Front Desk', 'type' => 'Account'],
@@ -337,10 +383,10 @@ class VoiceBotTest extends TestCase
         $page->assertDontSee('>Main Menu<', false);
 
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
-            'sip_username' => 'client-picked-name',
+            'sip_username' => 'foreign-login',
             'provider' => 'hermes',
             'caller_id' => '',
-        ])->assertStatus(422)->assertJson(['error' => 'Choose one of your extensions.']);
+        ])->assertStatus(422)->assertJson(['error' => 'That extension is not on your account.']);
 
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'client-picked-name',
@@ -358,6 +404,7 @@ class VoiceBotTest extends TestCase
             $data = $request->data();
             return $data['sip_username'] === '0205500102'
                 && $data['username'] === '0205500102'
+                && $data['sip_password'] === 'live-sip-pass2'
                 && array_key_exists('caller_id', $data)
                 && $data['caller_id'] === null;
         });
@@ -410,7 +457,31 @@ class VoiceBotTest extends TestCase
         Http::fake(function ($request) {
             $url = $request->url();
             if (str_contains($url, 'billing.example.test')) {
-                if (str_contains($url, 'get_extensions_list')) return Http::response(['extensions_list' => $this->extensionRows]);
+                if (str_contains($url, 'get_extensions_list')) {
+                    if ($this->extensionsFault) return Http::response(['faultcode' => 'Server.Session.check_auth.auth_failed']);
+                    return Http::response(['extensions_list' => $this->extensionRows]);
+                }
+                if (str_contains($url, 'get_account_list')) {
+                    $list = [];
+                    foreach ($this->extensionRows as $e) {
+                        $ia = (int) ($e['i_account'] ?? 0);
+                        $list[] = ['i_account' => $ia, 'i_customer' => 55, 'id' => $e['account_id'] ?? '', 'h323_password' => $this->sipPasswords[$ia] ?? $this->sipPassword];
+                    }
+                    $list[] = ['i_account' => 77, 'i_customer' => 99, 'id' => 'foreign-login', 'h323_password' => 'foreign-secret-pw'];
+                    return Http::response(['account_list' => $list]);
+                }
+                if (str_contains($url, 'get_account_info')) {
+                    $params = json_decode((string) ($request->data()['params'] ?? '{}'), true);
+                    $ia = (int) (is_array($params) ? ($params['i_account'] ?? 0) : 0);
+                    foreach ($this->extensionRows as $e) {
+                        if ((int) ($e['i_account'] ?? 0) !== $ia) continue;
+                        return Http::response(['account_info' => [
+                            'i_account' => $ia, 'i_customer' => 55, 'id' => $e['account_id'] ?? '',
+                            'h323_password' => $this->sipPasswords[$ia] ?? $this->sipPassword,
+                        ]]);
+                    }
+                    return Http::response(['account_info' => ['i_account' => $ia, 'i_customer' => 99, 'id' => 'foreign-login', 'h323_password' => 'foreign-secret-pw']]);
+                }
                 return Http::response(['customer_info' => ['i_customer' => 55]]);
             }
             if (str_contains($url, 'voice.example.test')) {
@@ -424,6 +495,7 @@ class VoiceBotTest extends TestCase
     private function payload(): array
     {
         return [
+            'sip_username' => '0205500101',
             'username' => 'alice',
             'caller_id' => '5615550100',
             'provider' => 'grok',

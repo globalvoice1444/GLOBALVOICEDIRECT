@@ -31,21 +31,18 @@
   <h3>Voice account</h3>
   @if($account['provisioned'])<p class="small">Status: {{ $account['status'] === 'active' ? 'Provisioned' : ucfirst($account['status']) }}.</p>@endif
   @if($account['last_error'])<p class="err">{{ $account['last_error'] }}</p>@endif
-  <label class="f" for="vbUser">SIP username</label>
-  @if(count($extensions) > 1)
+  <label class="f" for="vbUser">Extension</label>
+  @if($canProvision)
   <select id="vbUser" {{ $demo ? 'disabled' : '' }}>
+   @if(count($extensions) !== 1)<option value="">Choose an extension</option>@endif
    @foreach($extensions as $ex)
-    <option value="{{ $ex['username'] }}" {{ $account['username'] === $ex['username'] ? 'selected' : '' }}>{{ $ex['label'] }}</option>
+    <option value="{{ $ex['username'] }}" {{ ($account['username'] === $ex['username'] || count($extensions) === 1) ? 'selected' : '' }}>{{ $ex['label'] }}</option>
    @endforeach
   </select>
-  <p class="small">Choose one of your extensions. The SIP username is that extension's login and cannot be typed in.</p>
+  <p class="small">Your extensions are loaded from your phone account. The SIP username is filled from the one you select. Its existing SIP password is used and is not shown here.</p>
   @else
-  <input type="text" id="vbUser" readonly value="{{ $account['username'] }}" aria-readonly="true">
-  @if($canProvision)
-  <p class="small">This is the SIP username on your extension. It cannot be changed here.</p>
-  @else
-  <p class="err">No SIP extension is available on this account. Sign in with your phone-line login so we can read your extensions. Provisioning stays off until an extension is available.</p>
-  @endif
+  <select id="vbUser" disabled><option value="">No extension available</option></select>
+  <p class="err">{{ $extensionMessage }}</p>
   @endif
   <label class="f" for="vbCid">Caller ID</label>
   <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Optional. 10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
@@ -59,7 +56,7 @@
   <input type="password" id="vbKey" maxlength="2000" autocomplete="new-password" placeholder="{{ $account['has_key'] ? 'Key saved. Enter a new key to replace it.' : 'Paste your provider key' }}" {{ $demo ? 'disabled' : '' }}>
   <p class="small">@if($account['has_key'])<span class="mask" aria-hidden="true">••••••••</span> A key is saved for this account. It is write-only. Leave the field blank to keep it.@else No provider key is saved yet.@endif</p>
   <label class="sw"><input type="checkbox" id="vbOn" {{ $account['enabled'] ? 'checked' : '' }} {{ $demo ? 'disabled' : '' }}> Account enabled</label>
-  <p class="small" style="margin-top:10px">The SIP password is generated here and stored encrypted. It is sent to the voice gateway and is not shown on this page.</p>
+  <p class="small" style="margin-top:10px">The SIP password already on the extension is stored encrypted and sent to the voice gateway. It is not shown on this page.</p>
   <div class="row">
    <button class="btn" id="vbSave" type="button" {{ ($demo || !$canProvision) ? 'disabled' : '' }}>Provision voice account</button>
    <button class="btn ghost" id="vbDropKey" type="button" {{ $demo || !$account['has_key'] ? 'disabled' : '' }}>Remove provider key</button>
