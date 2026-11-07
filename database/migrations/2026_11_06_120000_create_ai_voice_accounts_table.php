@@ -15,7 +15,7 @@ return new class extends Migration {
             $t->string('username', 64);
             $t->text('sip_password');
             $t->boolean('enabled')->default(true);
-            $t->string('caller_id', 20);
+            $t->string('caller_id', 20)->nullable();
             $t->string('provider', 20);
             $t->text('api_key')->nullable();
             $t->timestamp('api_key_updated_at')->nullable();

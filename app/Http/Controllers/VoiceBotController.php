@@ -30,11 +30,15 @@ class VoiceBotController extends Controller
     {
         $uid = $this->uid();
         $account = AiVoiceAccount::where('user_id', $uid)->first();
+        $username = VoiceAccountProvisioner::sipUsernameFor($uid);
+        $presented = $this->present($account);
+        $presented['username'] = $username ?? '';
         return response()->view('users.gvd-voice-bot', [
-            'account' => $this->present($account),
+            'account' => $presented,
             'providers' => VoiceAccountProvisioner::providers(),
             'endpoint' => (string) config('ai_connect.mcp_endpoint', VoiceAccountProvisioner::MCP_ENDPOINT),
             'demo' => Demo::isDemoUser($uid),
+            'canProvision' => $username !== null,
         ])->withHeaders(self::NC);
     }
 
@@ -43,18 +47,18 @@ class VoiceBotController extends Controller
         $uid = $this->uid();
         if (Demo::isDemoUser($uid)) return $this->j(['ok' => false, 'error' => Demo::READONLY], 422);
 
-        $username = trim((string) $r->input('username', ''));
+        $username = VoiceAccountProvisioner::sipUsernameFor($uid);
+        if ($username === null) {
+            return $this->j(['ok' => false, 'error' => 'No phone number is on file for this account. Add your number, then try again.'], 422);
+        }
         $provider = (string) $r->input('provider', '');
         $caller = preg_replace('/\D/', '', (string) $r->input('caller_id', ''));
         $key = trim((string) $r->input('api_key', ''));
-        if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$/', $username)) {
-            return $this->j(['ok' => false, 'error' => 'Username must be 3 to 64 letters, numbers, dots, underscores, or hyphens.'], 422);
-        }
         if (!array_key_exists($provider, VoiceAccountProvisioner::providers())) {
             return $this->j(['ok' => false, 'error' => 'Choose Grok, OpenAI, or Hermes.'], 422);
         }
-        if (!preg_match('/^[0-9]{10,15}$/', $caller)) {
-            return $this->j(['ok' => false, 'error' => 'Caller ID must be 10 to 15 digits.'], 422);
+        if ($caller !== '' && !preg_match('/\A[0-9]{10,15}\z/', $caller)) {
+            return $this->j(['ok' => false, 'error' => 'Caller ID must be 10 to 15 digits, or left blank.'], 422);
         }
         if (strlen($key) > 2000) {
             return $this->j(['ok' => false, 'error' => 'That provider key is too long.'], 422);
@@ -68,7 +72,7 @@ class VoiceBotController extends Controller
             $account->sip_password = VoiceAccountProvisioner::generateSipPassword();
         }
         $account->username = $username;
-        $account->caller_id = $caller;
+        $account->caller_id = $caller === '' ? null : $caller;
         $account->provider = $provider;
         $account->enabled = filter_var($r->input('enabled', false), FILTER_VALIDATE_BOOLEAN);
         if ($key !== '') {
@@ -161,7 +165,7 @@ class VoiceBotController extends Controller
         }
         return [
             'username' => (string) $account->username,
-            'caller_id' => (string) $account->caller_id,
+            'caller_id' => (string) ($account->caller_id ?? ''),
             'provider' => (string) $account->provider,
             'enabled' => (bool) $account->enabled,
             'has_key' => $account->hasApiKey(),

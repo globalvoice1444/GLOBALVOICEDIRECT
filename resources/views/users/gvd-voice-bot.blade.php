@@ -31,10 +31,15 @@
   <h3>Voice account</h3>
   @if($account['provisioned'])<p class="small">Status: {{ $account['status'] === 'active' ? 'Provisioned' : ucfirst($account['status']) }}.</p>@endif
   @if($account['last_error'])<p class="err">{{ $account['last_error'] }}</p>@endif
-  <label class="f" for="vbUser">Username</label>
-  <input type="text" id="vbUser" maxlength="64" autocomplete="off" value="{{ $account['username'] }}" {{ $demo ? 'disabled' : '' }}>
+  <label class="f" for="vbUser">SIP username</label>
+  <input type="text" id="vbUser" readonly value="{{ $account['username'] }}" aria-readonly="true">
+  @if($canProvision)
+  <p class="small">Taken from the phone number on your account. It cannot be changed here.</p>
+  @else
+  <p class="err">No phone number is on file for this account. Add your number, then come back to provision a voice bot.</p>
+  @endif
   <label class="f" for="vbCid">Caller ID</label>
-  <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
+  <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Optional. 10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
   <label class="f" for="vbProv">Provider</label>
   <select id="vbProv" {{ $demo ? 'disabled' : '' }}>
    @foreach($providers as $id => $label)
@@ -47,9 +52,9 @@
   <label class="sw"><input type="checkbox" id="vbOn" {{ $account['enabled'] ? 'checked' : '' }} {{ $demo ? 'disabled' : '' }}> Account enabled</label>
   <p class="small" style="margin-top:10px">The SIP password is generated here and stored encrypted. It is sent to the voice gateway and is not shown on this page.</p>
   <div class="row">
-   <button class="btn" id="vbSave" type="button" {{ $demo ? 'disabled' : '' }}>Provision voice account</button>
+   <button class="btn" id="vbSave" type="button" {{ ($demo || !$canProvision) ? 'disabled' : '' }}>Provision voice account</button>
    <button class="btn ghost" id="vbDropKey" type="button" {{ $demo || !$account['has_key'] ? 'disabled' : '' }}>Remove provider key</button>
-   @if($account['username'] !== '')
+   @if($account['provisioned'])
    <button class="btn red" id="vbDrop" type="button" {{ $demo ? 'disabled' : '' }}>Remove voice account</button>
    @endif
   </div>
@@ -64,7 +69,7 @@ var VB=(function(){
  return {
   save:function(){
    var btn=document.getElementById('vbSave'); btn.disabled=true;
-   post('',{username:document.getElementById('vbUser').value,caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
+   post('',{caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
     if(!r.ok){say(false,r.error||'Could not provision the voice account.');btn.disabled=false;return;}
     document.getElementById('vbKey').value='';
     if(r.queued){say(true,'Provisioning has started.');btn.disabled=false;return;}

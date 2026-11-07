@@ -32,8 +32,10 @@ class VoiceBotTest extends TestCase
                 $table->id();
                 $table->unsignedBigInteger('user_id')->nullable();
                 $table->unsignedBigInteger('i_customer')->nullable();
+                $table->text('numbers')->nullable();
             });
         }
+        Schema::dropIfExists('ai_call_lines');
 
         config([
             'ai_connect.voice_provisioning_enabled' => true,
@@ -52,6 +54,7 @@ class VoiceBotTest extends TestCase
     {
         Schema::dropIfExists('ai_voice_accounts');
         Schema::dropIfExists('user_phone_numbers');
+        Schema::dropIfExists('ai_call_lines');
         parent::tearDown();
     }
 
@@ -76,6 +79,7 @@ class VoiceBotTest extends TestCase
 
     public function test_page_shows_mcp_endpoint_and_only_the_signed_in_account(): void
     {
+        DB::table('user_phone_numbers')->insert(['user_id' => 42, 'numbers' => '(561) 555-0100']);
         AiVoiceAccount::create([
             'user_id' => 42,
             'account_id' => '42',
@@ -105,8 +109,10 @@ class VoiceBotTest extends TestCase
         $response->assertOk();
         $response->assertSee('https://app.globalvoicedirect.com/mcp', false);
         $response->assertSee('Voice bot', false);
-        $response->assertSee('alice-voice', false);
-        $response->assertSee('value="5615550100"', false);
+        $response->assertSee('readonly', false);
+        $response->assertSee('value="15615550100"', false);
+        $response->assertSee('Taken from the phone number on your account.', false);
+        $response->assertDontSee('alice-voice', false);
         $response->assertDontSee('bob-voice', false);
         $response->assertDontSee('provider-key-alice', false);
         $response->assertDontSee('provider-key-bob', false);
@@ -128,8 +134,9 @@ class VoiceBotTest extends TestCase
                 ->push(['ok' => true], 200),
         ]);
 
+        $this->givePhone(42, '5615550100');
         $create = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
-            'username' => 'alice',
+            'username' => 'client-picked-name',
             'caller_id' => '(561) 555-0100',
             'provider' => 'grok',
             'enabled' => true,
@@ -141,6 +148,7 @@ class VoiceBotTest extends TestCase
 
         $row = AiVoiceAccount::where('user_id', 42)->first();
         $this->assertSame('42', $row->account_id);
+        $this->assertSame('15615550100', $row->username);
         $this->assertSame('5615550100', $row->caller_id);
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid($row->sip_password));
         $this->assertNotNull($row->api_key_updated_at);
@@ -152,7 +160,7 @@ class VoiceBotTest extends TestCase
         $this->assertStringNotContainsString($password, serialize(new ProvisionVoiceAccount(42, ProvisionVoiceAccount::PUT)));
 
         $again = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
-            'username' => 'alice',
+            'username' => 'client-picked-name',
             'caller_id' => '5615550100',
             'provider' => 'openai',
             'enabled' => false,
@@ -166,7 +174,7 @@ class VoiceBotTest extends TestCase
         $this->assertSame('Updated', $row->last_result);
 
         $rotate = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
-            'username' => 'alice',
+            'username' => 'still-ignored',
             'caller_id' => '5615550100',
             'provider' => 'hermes',
             'enabled' => true,
@@ -191,7 +199,9 @@ class VoiceBotTest extends TestCase
                 return $request->method() === 'PUT'
                     && $request->url() === 'https://voice.example.test/provision/accounts/42'
                     && $request->hasHeader('Authorization', 'Bearer gateway-token-test')
-                    && $data['username'] === 'alice'
+                    && $data['sip_username'] === '15615550100'
+                    && $data['username'] === '15615550100'
+                    && !array_key_exists('client-picked-name', $data)
                     && $data['sip_password'] === $password
                     && $data['enabled'] === true
                     && $data['caller_id'] === '5615550100'
@@ -223,6 +233,7 @@ class VoiceBotTest extends TestCase
 
     public function test_gateway_conflicts_and_validation_do_not_echo_secrets(): void
     {
+        $this->givePhone(42, '5615550100');
         Http::preventStrayRequests();
         Http::fake([
             'https://voice.example.test/provision/accounts/*' => Http::sequence()
@@ -248,6 +259,7 @@ class VoiceBotTest extends TestCase
 
     public function test_unreachable_gateway_is_logged_without_the_exception_message(): void
     {
+        $this->givePhone(42, '5615550100');
         Http::preventStrayRequests();
         Http::fake(function () {
             throw new ConnectionException('connection failed for provider-key-one');
@@ -263,6 +275,7 @@ class VoiceBotTest extends TestCase
 
     public function test_queue_failure_falls_back_to_sync(): void
     {
+        $this->givePhone(42, '5615550100');
         config(['queue.default' => 'database']);
         Http::preventStrayRequests();
         Http::fake(['https://voice.example.test/provision/accounts/*' => Http::response(['ok' => true], 201)]);
@@ -293,13 +306,67 @@ class VoiceBotTest extends TestCase
 
     public function test_validation_rejects_bad_caller_id_and_provider(): void
     {
+        $this->givePhone(42, '5615550100');
         Http::fake();
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'ab',
-            'caller_id' => '123',
+            'caller_id' => '5615550100',
             'provider' => 'claude',
-        ])->assertStatus(422);
+        ])->assertStatus(422)->assertJson(['error' => 'Choose Grok, OpenAI, or Hermes.']);
+        $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'username' => 'client-picked-name',
+            'caller_id' => '123',
+            'provider' => 'grok',
+        ])->assertStatus(422)->assertJson(['error' => 'Caller ID must be 10 to 15 digits, or left blank.']);
         Http::assertNothingSent();
+    }
+
+    public function test_missing_phone_disables_provisioning_and_ignores_a_typed_username(): void
+    {
+        Http::fake();
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertOk();
+        $page->assertSee('No phone number is on file for this account.', false);
+        $page->assertSee('id="vbSave" type="button" disabled', false);
+
+        $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'username' => 'client-picked-name',
+            'provider' => 'grok',
+            'caller_id' => '5615550100',
+        ])->assertStatus(422)->assertJson(['ok' => false, 'error' => 'No phone number is on file for this account. Add your number, then try again.']);
+        $this->assertNull(AiVoiceAccount::where('user_id', 42)->first());
+        Http::assertNothingSent();
+    }
+
+    public function test_calling_line_wins_over_the_registered_number_and_blank_caller_id_is_null(): void
+    {
+        Schema::create('ai_call_lines', function ($table) {
+            $table->unsignedBigInteger('user_id')->primary();
+            $table->string('account', 64);
+            $table->text('secret_enc')->nullable();
+        });
+        DB::table('ai_call_lines')->insert(['user_id' => 42, 'account' => '3055550199']);
+        $this->givePhone(42, json_encode(['(561) 555-0100']));
+        Http::preventStrayRequests();
+        Http::fake(['https://voice.example.test/provision/accounts/*' => Http::response(['ok' => true], 201)]);
+
+        $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'username' => 'client-picked-name',
+            'provider' => 'hermes',
+            'caller_id' => '',
+            'enabled' => true,
+        ])->assertOk();
+
+        $row = AiVoiceAccount::where('user_id', 42)->first();
+        $this->assertSame('13055550199', $row->username);
+        $this->assertNull($row->caller_id);
+        Http::assertSent(function ($request) {
+            $data = $request->data();
+            return $data['sip_username'] === '13055550199'
+                && $data['username'] === '13055550199'
+                && array_key_exists('caller_id', $data)
+                && $data['caller_id'] === null;
+        });
     }
 
     public function test_ai_connect_page_links_to_voice_bot_only_when_enabled(): void
@@ -316,6 +383,11 @@ class VoiceBotTest extends TestCase
     private function asUser(int $id)
     {
         return $this->withSession(['user_login' => true, 'user_id' => $id, 'nice_name' => 'Ada']);
+    }
+
+    private function givePhone(int $userId, string $numbers): void
+    {
+        DB::table('user_phone_numbers')->insert(['user_id' => $userId, 'numbers' => $numbers]);
     }
 
     private function payload(): array

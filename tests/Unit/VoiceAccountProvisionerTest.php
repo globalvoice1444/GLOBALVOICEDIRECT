@@ -32,6 +32,16 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid('abc!@#$%^&*()'));
     }
 
+    public function test_sip_username_is_digits_with_a_leading_one_for_us_numbers(): void
+    {
+        $this->assertSame('15615550100', VoiceAccountProvisioner::normalizeSipUsername('(561) 555-0100'));
+        $this->assertSame('15615550100', VoiceAccountProvisioner::normalizeSipUsername('5615550100'));
+        $this->assertSame('15615550100', VoiceAccountProvisioner::normalizeSipUsername('15615550100'));
+        $this->assertNull(VoiceAccountProvisioner::normalizeSipUsername('555-0100'));
+        $this->assertNull(VoiceAccountProvisioner::normalizeSipUsername(''));
+        $this->assertTrue((bool) preg_match('/\A[A-Za-z0-9][A-Za-z0-9._-]{2,63}\z/', VoiceAccountProvisioner::normalizeSipUsername('5615550100')));
+    }
+
     public function test_menu_visibility_follows_the_feature_flag_and_ai_connect(): void
     {
         config(['ai_connect.voice_provisioning_enabled' => false, 'ai_connect.enabled' => true]);
