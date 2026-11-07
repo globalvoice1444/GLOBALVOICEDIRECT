@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Fax\FaxInbox;
 use App\Models\AiVoiceAccount;
+use App\Portal\BillingSession;
+use App\Portal\Demo;
+use App\Portal\VoData;
 use App\Support\AiConnect;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Idempotent voice-gateway provisioning for the signed-in customer's own account.
@@ -56,38 +58,56 @@ class VoiceAccountProvisioner
         return (bool) preg_match('/\A[\x21-\x3A\x3C-\x7E]{12,128}\z/', $password);
     }
 
-    /** Gateway username rule. Digits only, after US 10-digit numbers gain a leading 1. */
-    public static function normalizeSipUsername(?string $raw): ?string
-    {
-        $digits = preg_replace('/\D/', '', (string) $raw);
-        if ($digits === null || $digits === '') return null;
-        if (strlen($digits) === 10) $digits = '1' . $digits;
-        if (strlen($digits) < 11 || strlen($digits) > 15) return null;
-        if (!preg_match('/\A[A-Za-z0-9][A-Za-z0-9._-]{2,63}\z/', $digits)) return null;
-        return $digits;
-    }
+    /** PortaSwitch extension SIP login: Customer/get_extensions_list account_id (account id / login). */
+    public const SIP_USERNAME = '/\A[A-Za-z0-9][A-Za-z0-9._-]{2,63}\z/';
 
     /**
-     * SIP username for this customer. Linked calling line (PortaSwitch account id) wins,
-     * otherwise the first registered number in user_phone_numbers.numbers.
+     * SIP usernames from extension rows.
+     * Live rows are Customer/get_extensions_list (account_id, id = extension number, type, name).
+     * The extensions page uses the same account_id as "account".
+     *
+     * @return array<int, array{username: string, label: string, ext: string, name: string}>
      */
-    public static function sipUsernameFor(int $userId): ?string
+    public static function sipChoices(array $rows): array
     {
-        if ($userId <= 0) return null;
-        if (Schema::hasTable('ai_call_lines')) {
-            $line = DB::table('ai_call_lines')->where('user_id', $userId)->value('account');
-            if ($name = self::normalizeSipUsername(is_string($line) ? $line : null)) return $name;
+        $out = [];
+        foreach ($rows as $e) {
+            if (!is_array($e)) continue;
+            if ((string) ($e['type'] ?? 'Account') !== 'Account') continue;
+            $login = trim((string) ($e['account_id'] ?? ($e['account'] ?? '')));
+            if (!preg_match(self::SIP_USERNAME, $login)) continue;
+            if (isset($out[$login])) continue;
+            $ext = trim((string) ($e['ext'] ?? ($e['id'] ?? '')));
+            if ($ext === $login) $ext = '';
+            $name = trim((string) ($e['name'] ?? ''));
+            $label = $login;
+            if ($ext !== '') $label = 'Ext ' . $ext . ($name !== '' ? ' — ' . $name : '') . ' · ' . $login;
+            elseif ($name !== '') $label = $name . ' · ' . $login;
+            $out[$login] = ['username' => $login, 'label' => $label, 'ext' => $ext, 'name' => $name];
         }
-        if (!Schema::hasTable('user_phone_numbers') || !Schema::hasColumn('user_phone_numbers', 'numbers')) return null;
-        $rows = DB::table('user_phone_numbers')->where('user_id', $userId)->orderBy('id')->pluck('numbers');
-        foreach ($rows as $raw) {
-            $decoded = json_decode((string) $raw, true);
-            $candidates = is_array($decoded) ? $decoded : [$raw];
-            foreach ($candidates as $candidate) {
-                if ($name = self::normalizeSipUsername(is_scalar($candidate) ? (string) $candidate : null)) return $name;
+        return array_values($out);
+    }
+
+    /** This customer's own extension SIP logins. Empty when billing has no extensions. */
+    public static function extensionsFor(int $userId): array
+    {
+        if ($userId <= 0) return [];
+        if (Demo::isDemoUser($userId)) return self::sipChoices(Demo::extensions()['rows'] ?? []);
+        try {
+            $k = BillingSession::get();
+            if (!$k) return [];
+            if (!in_array((int) ($k['i_customer'] ?? 0), FaxInbox::tenantsForUser($userId), true)) return [];
+            $v = new VoData($k);
+            try {
+                $list = $v->call('Customer/get_extensions_list', ['i_customer' => $v->ic])['extensions_list'] ?? [];
+            } finally {
+                try { $v->close(); } catch (\Throwable $e) {}
             }
+            return self::sipChoices(is_array($list) ? $list : []);
+        } catch (\Throwable $e) {
+            Log::warning('voice bot extensions unavailable', ['user_id' => $userId, 'error' => $e::class]);
+            return [];
         }
-        return null;
     }
 
     public function endpoint(string $accountId): string
@@ -105,13 +125,9 @@ class VoiceAccountProvisioner
             return VoiceProvisionResult::failure('The voice account could not be saved. Try again.');
         }
 
-        $username = self::sipUsernameFor((int) $account->user_id);
-        if ($username === null) {
-            return VoiceProvisionResult::failure('No phone number is on file for this account.');
-        }
-        if ((string) $account->username !== $username) {
-            DB::table('ai_voice_accounts')->where('user_id', $account->user_id)->update(['username' => $username, 'updated_at' => now()]);
-            $account->username = $username;
+        $username = trim((string) $account->username);
+        if (!preg_match(self::SIP_USERNAME, $username)) {
+            return VoiceProvisionResult::failure('This voice account has no SIP extension username.');
         }
 
         $caller = preg_replace('/\D/', '', (string) $account->caller_id);

@@ -32,14 +32,17 @@ class VoiceAccountProvisionerTest extends TestCase
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid('abc!@#$%^&*()'));
     }
 
-    public function test_sip_username_is_digits_with_a_leading_one_for_us_numbers(): void
+    public function test_sip_choices_use_the_extension_account_id(): void
     {
-        $this->assertSame('15615550100', VoiceAccountProvisioner::normalizeSipUsername('(561) 555-0100'));
-        $this->assertSame('15615550100', VoiceAccountProvisioner::normalizeSipUsername('5615550100'));
-        $this->assertSame('15615550100', VoiceAccountProvisioner::normalizeSipUsername('15615550100'));
-        $this->assertNull(VoiceAccountProvisioner::normalizeSipUsername('555-0100'));
-        $this->assertNull(VoiceAccountProvisioner::normalizeSipUsername(''));
-        $this->assertTrue((bool) preg_match('/\A[A-Za-z0-9][A-Za-z0-9._-]{2,63}\z/', VoiceAccountProvisioner::normalizeSipUsername('5615550100')));
+        $choices = VoiceAccountProvisioner::sipChoices([
+            ['i_account' => 9, 'id' => '101', 'account_id' => '0205500101', 'name' => 'Front Desk', 'type' => 'Account'],
+            ['i_account' => 9, 'id' => '101', 'account_id' => '0205500101', 'name' => 'Front Desk', 'type' => 'Account'],
+            ['i_account' => 0, 'id' => '200', 'account_id' => '', 'name' => 'Main Menu', 'type' => 'Auto Attendant'],
+            ['i_account' => 10, 'id' => '102', 'account_id' => 'ab', 'name' => 'Too short', 'type' => 'Account'],
+            ['ext' => '102', 'account' => 'demo102', 'name' => 'Sales', 'type' => 'Account'],
+        ]);
+        $this->assertSame(['0205500101', 'demo102'], array_column($choices, 'username'));
+        $this->assertSame('Ext 101 — Front Desk · 0205500101', $choices[0]['label']);
     }
 
     public function test_menu_visibility_follows_the_feature_flag_and_ai_connect(): void

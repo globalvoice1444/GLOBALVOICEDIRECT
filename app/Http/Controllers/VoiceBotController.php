@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 class VoiceBotController extends Controller
 {
     const NC = ['Cache-Control' => 'private, no-store, max-age=0'];
+    const NO_EXTENSION = 'No SIP extension is available on this account. Sign in with your phone-line login so we can read your extensions. Provisioning stays off until an extension is available.';
 
     private function uid(): int
     {
@@ -30,15 +31,19 @@ class VoiceBotController extends Controller
     {
         $uid = $this->uid();
         $account = AiVoiceAccount::where('user_id', $uid)->first();
-        $username = VoiceAccountProvisioner::sipUsernameFor($uid);
+        $extensions = VoiceAccountProvisioner::extensionsFor($uid);
+        $allowed = array_column($extensions, 'username');
         $presented = $this->present($account);
-        $presented['username'] = $username ?? '';
+        $selected = $presented['username'];
+        if (!in_array($selected, $allowed, true)) $selected = count($allowed) === 1 ? $allowed[0] : '';
+        $presented['username'] = $selected;
         return response()->view('users.gvd-voice-bot', [
             'account' => $presented,
+            'extensions' => $extensions,
             'providers' => VoiceAccountProvisioner::providers(),
             'endpoint' => (string) config('ai_connect.mcp_endpoint', VoiceAccountProvisioner::MCP_ENDPOINT),
             'demo' => Demo::isDemoUser($uid),
-            'canProvision' => $username !== null,
+            'canProvision' => $allowed !== [],
         ])->withHeaders(self::NC);
     }
 
@@ -47,9 +52,14 @@ class VoiceBotController extends Controller
         $uid = $this->uid();
         if (Demo::isDemoUser($uid)) return $this->j(['ok' => false, 'error' => Demo::READONLY], 422);
 
-        $username = VoiceAccountProvisioner::sipUsernameFor($uid);
-        if ($username === null) {
-            return $this->j(['ok' => false, 'error' => 'No phone number is on file for this account. Add your number, then try again.'], 422);
+        $allowed = array_column(VoiceAccountProvisioner::extensionsFor($uid), 'username');
+        if ($allowed === []) {
+            return $this->j(['ok' => false, 'error' => self::NO_EXTENSION], 422);
+        }
+        $picked = trim((string) $r->input('sip_username', $r->input('username', '')));
+        $username = count($allowed) === 1 ? $allowed[0] : $picked;
+        if (!in_array($username, $allowed, true)) {
+            return $this->j(['ok' => false, 'error' => 'Choose one of your extensions.'], 422);
         }
         $provider = (string) $r->input('provider', '');
         $caller = preg_replace('/\D/', '', (string) $r->input('caller_id', ''));

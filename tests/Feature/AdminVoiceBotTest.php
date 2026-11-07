@@ -25,13 +25,6 @@ class AdminVoiceBotTest extends TestCase
 
         $migration = require database_path('migrations/2026_11_06_120000_create_ai_voice_accounts_table.php');
         $migration->up();
-        if (!Schema::hasTable('user_phone_numbers')) {
-            Schema::create('user_phone_numbers', function ($table) {
-                $table->id();
-                $table->unsignedBigInteger('user_id')->nullable();
-                $table->text('numbers')->nullable();
-            });
-        }
         if (!Schema::hasTable('wpgc_users')) {
             Schema::create('wpgc_users', function ($table) {
                 $table->increments('ID');
@@ -54,7 +47,6 @@ class AdminVoiceBotTest extends TestCase
     {
         Schema::dropIfExists('ai_voice_accounts');
         Schema::dropIfExists('wpgc_users');
-        Schema::dropIfExists('user_phone_numbers');
         parent::tearDown();
     }
 
@@ -160,8 +152,8 @@ class AdminVoiceBotTest extends TestCase
                 return $request->method() === 'PUT'
                     && $request->url() === 'https://voice.example.test/provision/accounts/7'
                     && $request->hasHeader('Authorization', 'Bearer gateway-token-test')
-                    && $data['sip_username'] === '15615550100'
-                    && $data['username'] === '15615550100'
+                    && $data['sip_username'] === 'alice-sip'
+                    && $data['username'] === 'alice-sip'
                     && $data['caller_id'] === '5615550100'
                     && $data['sip_password'] === $before
                     && !array_key_exists('api_key', $data);
@@ -197,7 +189,6 @@ class AdminVoiceBotTest extends TestCase
             'display_name' => 'Ada Owner',
             'user_email' => 'ada@example.test',
         ]);
-        DB::table('user_phone_numbers')->insert(['user_id' => 7, 'numbers' => '5615550100']);
         AiVoiceAccount::create([
             'user_id' => 7,
             'account_id' => '7',

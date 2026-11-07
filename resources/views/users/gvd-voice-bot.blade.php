@@ -32,11 +32,20 @@
   @if($account['provisioned'])<p class="small">Status: {{ $account['status'] === 'active' ? 'Provisioned' : ucfirst($account['status']) }}.</p>@endif
   @if($account['last_error'])<p class="err">{{ $account['last_error'] }}</p>@endif
   <label class="f" for="vbUser">SIP username</label>
+  @if(count($extensions) > 1)
+  <select id="vbUser" {{ $demo ? 'disabled' : '' }}>
+   @foreach($extensions as $ex)
+    <option value="{{ $ex['username'] }}" {{ $account['username'] === $ex['username'] ? 'selected' : '' }}>{{ $ex['label'] }}</option>
+   @endforeach
+  </select>
+  <p class="small">Choose one of your extensions. The SIP username is that extension's login and cannot be typed in.</p>
+  @else
   <input type="text" id="vbUser" readonly value="{{ $account['username'] }}" aria-readonly="true">
   @if($canProvision)
-  <p class="small">Taken from the phone number on your account. It cannot be changed here.</p>
+  <p class="small">This is the SIP username on your extension. It cannot be changed here.</p>
   @else
-  <p class="err">No phone number is on file for this account. Add your number, then come back to provision a voice bot.</p>
+  <p class="err">No SIP extension is available on this account. Sign in with your phone-line login so we can read your extensions. Provisioning stays off until an extension is available.</p>
+  @endif
   @endif
   <label class="f" for="vbCid">Caller ID</label>
   <input type="text" id="vbCid" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Optional. 10 to 15 digits" value="{{ $account['caller_id'] }}" {{ $demo ? 'disabled' : '' }}>
@@ -69,7 +78,8 @@ var VB=(function(){
  return {
   save:function(){
    var btn=document.getElementById('vbSave'); btn.disabled=true;
-   post('',{caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
+   var user=document.getElementById('vbUser');
+   post('',{sip_username:user?user.value:'',caller_id:document.getElementById('vbCid').value,provider:document.getElementById('vbProv').value,enabled:document.getElementById('vbOn').checked,api_key:document.getElementById('vbKey').value}).then(function(r){
     if(!r.ok){say(false,r.error||'Could not provision the voice account.');btn.disabled=false;return;}
     document.getElementById('vbKey').value='';
     if(r.queued){say(true,'Provisioning has started.');btn.disabled=false;return;}

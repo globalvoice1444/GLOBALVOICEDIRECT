@@ -17,6 +17,10 @@ use Tests\TestCase;
 class VoiceBotTest extends TestCase
 {
     private array $logs = [];
+    private ?string $billingSession = null;
+    private array $extensionRows = [];
+    private array $gatewayQueue = [];
+    private bool $gatewayThrows = false;
 
     protected function setUp(): void
     {
@@ -36,6 +40,10 @@ class VoiceBotTest extends TestCase
             });
         }
         Schema::dropIfExists('ai_call_lines');
+        $this->billingSession = null;
+        $this->extensionRows = [];
+        $this->gatewayQueue = [];
+        $this->gatewayThrows = false;
 
         config([
             'ai_connect.voice_provisioning_enabled' => true,
@@ -79,7 +87,7 @@ class VoiceBotTest extends TestCase
 
     public function test_page_shows_mcp_endpoint_and_only_the_signed_in_account(): void
     {
-        DB::table('user_phone_numbers')->insert(['user_id' => 42, 'numbers' => '(561) 555-0100']);
+        $this->bill();
         AiVoiceAccount::create([
             'user_id' => 42,
             'account_id' => '42',
@@ -110,8 +118,8 @@ class VoiceBotTest extends TestCase
         $response->assertSee('https://app.globalvoicedirect.com/mcp', false);
         $response->assertSee('Voice bot', false);
         $response->assertSee('readonly', false);
-        $response->assertSee('value="15615550100"', false);
-        $response->assertSee('Taken from the phone number on your account.', false);
+        $response->assertSee('value="0205500101"', false);
+        $response->assertSee('This is the SIP username on your extension.', false);
         $response->assertDontSee('alice-voice', false);
         $response->assertDontSee('bob-voice', false);
         $response->assertDontSee('provider-key-alice', false);
@@ -124,17 +132,12 @@ class VoiceBotTest extends TestCase
 
     public function test_provision_is_idempotent_and_omits_an_unchanged_key(): void
     {
-        Http::preventStrayRequests();
-        Http::fake([
-            'https://voice.example.test/provision/accounts/*' => Http::sequence()
-                ->push(['ok' => true], 201)
-                ->push(['ok' => true], 200)
-                ->push(['ok' => true], 200)
-                ->push(['ok' => true], 200)
-                ->push(['ok' => true], 200),
-        ]);
-
-        $this->givePhone(42, '5615550100');
+        $this->queueGateway(201);
+        $this->queueGateway(200);
+        $this->queueGateway(200);
+        $this->queueGateway(200);
+        $this->queueGateway(200);
+        $this->bill();
         $create = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'client-picked-name',
             'caller_id' => '(561) 555-0100',
@@ -148,7 +151,7 @@ class VoiceBotTest extends TestCase
 
         $row = AiVoiceAccount::where('user_id', 42)->first();
         $this->assertSame('42', $row->account_id);
-        $this->assertSame('15615550100', $row->username);
+        $this->assertSame('0205500101', $row->username);
         $this->assertSame('5615550100', $row->caller_id);
         $this->assertTrue(VoiceAccountProvisioner::passwordIsValid($row->sip_password));
         $this->assertNotNull($row->api_key_updated_at);
@@ -193,53 +196,37 @@ class VoiceBotTest extends TestCase
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot/remove', [])->assertOk();
         $this->assertNull(AiVoiceAccount::where('user_id', 42)->first());
 
-        Http::assertSentInOrder([
-            function ($request) use ($password) {
-                $data = $request->data();
-                return $request->method() === 'PUT'
-                    && $request->url() === 'https://voice.example.test/provision/accounts/42'
-                    && $request->hasHeader('Authorization', 'Bearer gateway-token-test')
-                    && $data['sip_username'] === '15615550100'
-                    && $data['username'] === '15615550100'
-                    && !array_key_exists('client-picked-name', $data)
-                    && $data['sip_password'] === $password
-                    && $data['enabled'] === true
-                    && $data['caller_id'] === '5615550100'
-                    && $data['provider'] === 'grok'
-                    && $data['api_key'] === 'provider-key-one';
-            },
-            function ($request) use ($password) {
-                $data = $request->data();
-                return $request->method() === 'PUT'
-                    && $data['provider'] === 'openai'
-                    && $data['enabled'] === false
-                    && $data['sip_password'] === $password
-                    && !array_key_exists('api_key', $data);
-            },
-            function ($request) {
-                return $request->method() === 'PUT' && $request->data()['api_key'] === 'provider-key-two';
-            },
-            function ($request) {
-                $data = $request->data();
-                return $request->method() === 'PUT' && array_key_exists('api_key', $data) && $data['api_key'] === null;
-            },
-            function ($request) {
-                return $request->method() === 'DELETE'
-                    && $request->url() === 'https://voice.example.test/provision/accounts/42';
-            },
-        ]);
+        $voice = collect(Http::recorded())->map(fn ($pair) => $pair[0])->filter(fn ($request) => str_contains($request->url(), 'voice.example.test'))->values();
+        $this->assertCount(5, $voice);
+        $first = $voice[0]->data();
+        $this->assertSame('PUT', $voice[0]->method());
+        $this->assertSame('https://voice.example.test/provision/accounts/42', $voice[0]->url());
+        $this->assertTrue($voice[0]->hasHeader('Authorization', 'Bearer gateway-token-test'));
+        $this->assertSame('0205500101', $first['sip_username']);
+        $this->assertSame('0205500101', $first['username']);
+        $this->assertSame($password, $first['sip_password']);
+        $this->assertTrue($first['enabled']);
+        $this->assertSame('5615550100', $first['caller_id']);
+        $this->assertSame('grok', $first['provider']);
+        $this->assertSame('provider-key-one', $first['api_key']);
+        $second = $voice[1]->data();
+        $this->assertSame('openai', $second['provider']);
+        $this->assertFalse($second['enabled']);
+        $this->assertSame($password, $second['sip_password']);
+        $this->assertArrayNotHasKey('api_key', $second);
+        $this->assertSame('0205500101', $second['sip_username']);
+        $this->assertSame('provider-key-two', $voice[2]->data()['api_key']);
+        $this->assertArrayHasKey('api_key', $voice[3]->data());
+        $this->assertNull($voice[3]->data()['api_key']);
+        $this->assertSame('DELETE', $voice[4]->method());
         $this->assertSecretsAbsent(['provider-key-one', 'provider-key-two', $password, 'gateway-token-test']);
     }
 
     public function test_gateway_conflicts_and_validation_do_not_echo_secrets(): void
     {
-        $this->givePhone(42, '5615550100');
-        Http::preventStrayRequests();
-        Http::fake([
-            'https://voice.example.test/provision/accounts/*' => Http::sequence()
-                ->push(['error' => 'provider-key-one sip_password leaked'], 409)
-                ->push(['error' => 'provider-key-one invalid'], 422),
-        ]);
+        $this->queueGateway(409, ['error' => 'provider-key-one sip_password leaked']);
+        $this->queueGateway(422, ['error' => 'provider-key-one invalid']);
+        $this->bill();
 
         $conflict = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', $this->payload());
         $conflict->assertStatus(422)->assertJson(['ok' => false, 'error' => 'That username is already in use.']);
@@ -259,11 +246,8 @@ class VoiceBotTest extends TestCase
 
     public function test_unreachable_gateway_is_logged_without_the_exception_message(): void
     {
-        $this->givePhone(42, '5615550100');
-        Http::preventStrayRequests();
-        Http::fake(function () {
-            throw new ConnectionException('connection failed for provider-key-one');
-        });
+        $this->gatewayThrows = true;
+        $this->bill();
         $response = $this->asUser(42)->postJson('/user/ai-connect/voice-bot', $this->payload());
         $response->assertStatus(422)->assertJson(['error' => 'Could not reach the voice gateway. Try again.']);
         $joined = implode("\n", $this->logs);
@@ -275,10 +259,9 @@ class VoiceBotTest extends TestCase
 
     public function test_queue_failure_falls_back_to_sync(): void
     {
-        $this->givePhone(42, '5615550100');
         config(['queue.default' => 'database']);
-        Http::preventStrayRequests();
-        Http::fake(['https://voice.example.test/provision/accounts/*' => Http::response(['ok' => true], 201)]);
+        $this->queueGateway(201);
+        $this->bill();
 
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', $this->payload())->assertOk()->assertJson(['status' => 'active']);
         $this->assertNotNull(AiVoiceAccount::where('user_id', 42)->first());
@@ -306,64 +289,75 @@ class VoiceBotTest extends TestCase
 
     public function test_validation_rejects_bad_caller_id_and_provider(): void
     {
-        $this->givePhone(42, '5615550100');
-        Http::fake();
+        $this->bill();
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'ab',
             'caller_id' => '5615550100',
             'provider' => 'claude',
         ])->assertStatus(422)->assertJson(['error' => 'Choose Grok, OpenAI, or Hermes.']);
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
-            'username' => 'client-picked-name',
+            'sip_username' => 'client-picked-name',
             'caller_id' => '123',
             'provider' => 'grok',
         ])->assertStatus(422)->assertJson(['error' => 'Caller ID must be 10 to 15 digits, or left blank.']);
-        Http::assertNothingSent();
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'voice.example.test'));
     }
 
-    public function test_missing_phone_disables_provisioning_and_ignores_a_typed_username(): void
+    public function test_missing_extension_disables_provisioning_and_ignores_a_typed_username(): void
     {
         Http::fake();
         $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
         $page->assertOk();
-        $page->assertSee('No phone number is on file for this account.', false);
+        $page->assertSee('No SIP extension is available on this account.', false);
         $page->assertSee('id="vbSave" type="button" disabled', false);
 
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'client-picked-name',
+            'sip_username' => 'client-picked-name',
             'provider' => 'grok',
             'caller_id' => '5615550100',
-        ])->assertStatus(422)->assertJson(['ok' => false, 'error' => 'No phone number is on file for this account. Add your number, then try again.']);
+        ])->assertStatus(422)->assertJson(['ok' => false, 'error' => 'No SIP extension is available on this account. Sign in with your phone-line login so we can read your extensions. Provisioning stays off until an extension is available.']);
         $this->assertNull(AiVoiceAccount::where('user_id', 42)->first());
         Http::assertNothingSent();
     }
 
-    public function test_calling_line_wins_over_the_registered_number_and_blank_caller_id_is_null(): void
+    public function test_customer_picks_one_of_their_extensions_and_blank_caller_id_is_null(): void
     {
-        Schema::create('ai_call_lines', function ($table) {
-            $table->unsignedBigInteger('user_id')->primary();
-            $table->string('account', 64);
-            $table->text('secret_enc')->nullable();
-        });
-        DB::table('ai_call_lines')->insert(['user_id' => 42, 'account' => '3055550199']);
-        $this->givePhone(42, json_encode(['(561) 555-0100']));
-        Http::preventStrayRequests();
-        Http::fake(['https://voice.example.test/provision/accounts/*' => Http::response(['ok' => true], 201)]);
+        $this->queueGateway(201);
+        $this->bill(42, [
+            ['i_account' => 9, 'id' => '101', 'account_id' => '0205500101', 'name' => 'Front Desk', 'type' => 'Account'],
+            ['i_account' => 10, 'id' => '102', 'account_id' => '0205500102', 'name' => 'Sales', 'type' => 'Account'],
+            ['i_account' => 0, 'id' => '200', 'account_id' => '', 'name' => 'Main Menu', 'type' => 'Auto Attendant'],
+        ]);
+        $page = $this->asUser(42)->get('/user/ai-connect/voice-bot');
+        $page->assertOk();
+        $page->assertSee('0205500101', false);
+        $page->assertSee('0205500102', false);
+        $page->assertSee('<select id="vbUser"', false);
+        $page->assertDontSee('>Main Menu<', false);
+
+        $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
+            'sip_username' => 'client-picked-name',
+            'provider' => 'hermes',
+            'caller_id' => '',
+        ])->assertStatus(422)->assertJson(['error' => 'Choose one of your extensions.']);
 
         $this->asUser(42)->postJson('/user/ai-connect/voice-bot', [
             'username' => 'client-picked-name',
+            'sip_username' => '0205500102',
             'provider' => 'hermes',
             'caller_id' => '',
             'enabled' => true,
         ])->assertOk();
 
         $row = AiVoiceAccount::where('user_id', 42)->first();
-        $this->assertSame('13055550199', $row->username);
+        $this->assertSame('0205500102', $row->username);
         $this->assertNull($row->caller_id);
         Http::assertSent(function ($request) {
+            if (!str_contains($request->url(), 'voice.example.test')) return false;
             $data = $request->data();
-            return $data['sip_username'] === '13055550199'
-                && $data['username'] === '13055550199'
+            return $data['sip_username'] === '0205500102'
+                && $data['username'] === '0205500102'
                 && array_key_exists('caller_id', $data)
                 && $data['caller_id'] === null;
         });
@@ -382,12 +376,49 @@ class VoiceBotTest extends TestCase
 
     private function asUser(int $id)
     {
-        return $this->withSession(['user_login' => true, 'user_id' => $id, 'nice_name' => 'Ada']);
+        $session = ['user_login' => true, 'user_id' => $id, 'nice_name' => 'Ada'];
+        if ($this->billingSession) $session['gvd_billing'] = $this->billingSession;
+        return $this->withSession($session);
     }
 
-    private function givePhone(int $userId, string $numbers): void
+    private function bill(int $userId = 42, ?array $extensions = null): void
     {
-        DB::table('user_phone_numbers')->insert(['user_id' => $userId, 'numbers' => $numbers]);
+        $this->extensionRows = $extensions ?? [[
+            'i_account' => 9, 'id' => '101', 'account_id' => '0205500101', 'name' => 'Front Desk', 'type' => 'Account',
+        ]];
+        DB::table('user_phone_numbers')->where('user_id', $userId)->delete();
+        DB::table('user_phone_numbers')->insert(['user_id' => $userId, 'i_customer' => 55, 'numbers' => '5615550100']);
+        $this->billingSession = Crypt::encryptString(json_encode([
+            'base' => 'https://billing.example.test',
+            'session_id' => 'sess-test',
+            'csrf_token' => '',
+            'access_token' => '',
+            'refresh_token' => '',
+            'realm' => 'customer',
+            'i_customer' => 55,
+        ]));
+        $this->installHttpFake();
+    }
+
+    private function queueGateway(int $status, array $body = ['ok' => true]): void
+    {
+        $this->gatewayQueue[] = Http::response($body, $status);
+    }
+
+    private function installHttpFake(): void
+    {
+        Http::fake(function ($request) {
+            $url = $request->url();
+            if (str_contains($url, 'billing.example.test')) {
+                if (str_contains($url, 'get_extensions_list')) return Http::response(['extensions_list' => $this->extensionRows]);
+                return Http::response(['customer_info' => ['i_customer' => 55]]);
+            }
+            if (str_contains($url, 'voice.example.test')) {
+                if ($this->gatewayThrows) throw new ConnectionException('connection failed for provider-key-one');
+                return array_shift($this->gatewayQueue) ?: Http::response(['ok' => true], 201);
+            }
+            return Http::response(['faultcode' => 'unexpected'], 500);
+        });
     }
 
     private function payload(): array
