@@ -22,7 +22,7 @@
 </style>
 <div class="ai" id="ai">
  <div class="hero"><div><h2>AI Connect</h2><p>Let ChatGPT, Claude or another AI assistant use your Global Voice Direct tools: read your contacts, send email from your own mailbox, start sequences and pull reports. You approve every action before it happens.</p></div>
-  <div><span class="chip" style="background:rgba(255,255,255,.12);color:#fff">{{ count(array_filter($d['keys'], fn($k)=>!$k['revoked'])) }} active key(s)</span></div></div>
+  <div><span class="chip" style="background:rgba(255,255,255,.12);color:#fff">{{ $d['active_key_count'] ?? count(array_filter($d['keys'], fn($k)=>!$k['revoked'])) }} active key(s)</span></div></div>
  @if(!$d['live'])<div class="note"><b>Preview.</b> AI Connect is not switched on for customers yet. {{ $d['demo'] ? 'This sample account is read-only.' : '' }}</div>@endif
  <div class="grid">
   <div>
@@ -35,6 +35,21 @@
       <td>@if($k['revoked'])<span class="off">Revoked</span>@else<button class="btn ghost" onclick="AI.revoke({{ $k['id'] }})" {{ $d['demo'] ? 'disabled' : '' }}>Revoke</button>@endif</td></tr>
     @empty <tr><td colspan="6" class="small">No keys yet. Create one, then paste it into your AI assistant.</td></tr>
     @endforelse</tbody></table></div>
+    @if(($d['keys_pages'] ?? 0) > 0)
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+     @if(($d['keys_page'] ?? 1) > 1)
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['keys_page' => $d['keys_page'] - 1]) }}">Previous</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Previous</span>
+     @endif
+     <span class="small">Page {{ $d['keys_page'] }} of {{ $d['keys_pages'] }}</span>
+     @if(($d['keys_page'] ?? 1) < $d['keys_pages'])
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['keys_page' => $d['keys_page'] + 1]) }}">Next</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Next</span>
+     @endif
+    </div>
+    @endif
     <p class="small" style="margin:10px 0 0">Keys are shown once when you create them. We store only a scrambled fingerprint, so a lost key can't be recovered: revoke it and make a new one.</p></div>
    @if($d['oauth'] || count($d['apps']))
    <div class="card"><h3>Connected apps</h3>
@@ -54,7 +69,23 @@
      <tr><td>{{ $a['when'] }}</td><td>{{ $a['key'] }}</td><td class="mono">{{ $a['what'] }}@if($a['mode']) <span class="small">({{ $a['mode'] }})</span>@endif</td>
       <td class="{{ $a['status']==='ok' ? 'ok' : ($a['status']==='error' ? 'err' : 'wait') }}">{{ ucfirst($a['status']) }}</td><td class="small">{{ $a['summary'] }}</td></tr>
     @empty <tr><td colspan="5" class="small">Nothing yet. Every request from an AI assistant shows up here.</td></tr>
-    @endforelse</tbody></table></div></div>
+    @endforelse</tbody></table></div>
+    @if(($d['activity_pages'] ?? 0) > 0)
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+     @if(($d['activity_page'] ?? 1) > 1)
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['activity_page' => $d['activity_page'] - 1]) }}">Previous</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Previous</span>
+     @endif
+     <span class="small">Page {{ $d['activity_page'] }} of {{ $d['activity_pages'] }}</span>
+     @if(($d['activity_page'] ?? 1) < $d['activity_pages'])
+      <a class="btn ghost" href="{{ request()->fullUrlWithQuery(['activity_page' => $d['activity_page'] + 1]) }}">Next</a>
+     @else
+      <span class="btn ghost" style="opacity:.5;pointer-events:none" aria-disabled="true">Next</span>
+     @endif
+    </div>
+    @endif
+    </div>
   </div>
   <div>
    <div class="card kill"><h3>Master switch</h3>
@@ -77,7 +108,11 @@
     <ol><li><b>Claude:</b> Settings &gt; Connectors &gt; Add custom connector. Paste the address above and your key.</li>
      <li><b>ChatGPT:</b> {{ $d['oauth'] ? 'Settings > Apps & Connectors > Create. Paste the address above, choose OAuth, then sign in with Global Voice Direct and click Allow. ' : '' }}Custom connectors that take actions need a ChatGPT Business, Enterprise or Edu plan.</li>
      <li><b>Other tools</b> (Cursor, scripts): send <code>Authorization: Bearer YOUR_KEY</code> to the address above.</li></ol>
-    <p class="small" style="margin:10px 0 0">Emails go out from your own connected mailbox, with your daily limit, unsubscribe link and tracking.{{ $d['calls'] ? '' : ' Calling through AI Connect is coming soon.' }}</p></div>
+    <p class="small" style="margin:10px 0 0">Emails go out from your own connected mailbox, with your daily limit, unsubscribe link and tracking.{{ $d['calls'] ? '' : ' Calling through AI Connect is coming soon.' }}</p>
+    @if(config('ai_connect.voice_provisioning_enabled'))
+    <p class="small" style="margin:10px 0 0"><a href="/user/ai-connect/voice-bot">Voice bot</a> — provision a voice account for your assistant. Choose a realtime voice provider or a text model such as Claude (<a href="https://console.anthropic.com" rel="noopener noreferrer">console.anthropic.com</a>). A text model needs a speech pipeline before a call can use it. Bring your own credentials. They are stored encrypted and are write-only. Grok uses the live voice gateway. Other providers are not yet supported for calls. Setup links for every provider are on the Voice bot page.</p>
+    @endif
+    </div>
   </div>
  </div>
  <div class="modal hide" id="aiM"><div class="box">

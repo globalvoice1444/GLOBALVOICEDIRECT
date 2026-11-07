@@ -97,6 +97,7 @@
           ['/user/sms-campaigns', 'SMS campaign', 'icon-message-square', ['user/sms-campaigns']],
           ['/user/email-campaigns', 'Email campaign', 'icon-mail', ['user/email-campaigns', 'emailCampaign', 'send_email', 'ot_editor_sendEmail']],
           ...(\App\Support\AiConnect::visibleTo((int) session('user_id')) ? [['/user/ai-connect', 'AI Connect', 'icon-cpu', ['user/ai-connect']]] : []), // 2026-11-02 mcp
+          ...(\App\Services\VoiceAccountProvisioner::visibleTo((int) session('user_id')) ? [['/user/ai-connect/voice-bot', 'Voice bot', 'icon-radio', ['user/ai-connect/voice-bot']]] : []),
         ],
         'Account' => [
           ['/user/profile', 'Profile', 'icon-user', ['user/profile']],
